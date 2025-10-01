@@ -1,0 +1,262 @@
+---
+title: Zorizko bektoreak II
+# author:  Itziar Irigoien, Borja Calvo, Usue Mori
+date: '\mbox{ }'
+classoptions: gipuzkoa, eu, foot
+name: Usue Mori, Jon Vadillo, Itziar Irigoien, Borja Calvo 
+course: Estatistika Metodo Aurreratuak
+tel: '\mbox{ }'
+mail: '[usue.mori, jon.vadillo, itziar.irigoien, borja.calvo]\@ehu.eus'
+address: | 
+         | Manuel de Lardizabal, 1
+         | 20018 Donostia
+header-includes: \usepackage{xcolor}
+urlcolor: blue
+output:
+  pdf_document:
+    keep_tex: false
+---
+
+
+
+
+# Baterako, baldintzazko eta probabilitate-lege marginalak
+
+Izan bedi $(X, Z)$ zorizko aldagai bikotea, ondorengo banaketa duena:
+
++ $Z$ zorizko aldagaiak $\{0, 1\}$ balioak hartzen ditu, $p = P(Z=1) = 1/3$ delarik. 
++ $X$ zorizko aldagaiaren inguruan badakigu, $Z$ jakinik, bere banaketa baldintzatuaren probabilitate-legea $5Z + 1$ parametrodun Poisson dela.
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Zein probabilitate-banaketa ezagun jarraitzen du $Z$ aldagaiak?
+  \end{minipage}}
+
+\bigskip
+
+
+ 
+Hasteko, definitu dezagun $(X, Z)$ren baterako probabilite-legea kalkulatuko duen funtzio bat. Horretarako, lehenengo $Z$ren probabilitate legea definituko dugu:
+
+```{r}
+getMarginalZ <- function (z) {
+r <- dbinom(z, size=1, prob=1/3) #=Bernoulli(p=1/3)
+return(r)
+}
+```
+
+
+Bestalde, $X|Z$ aldagai baldintzatuaren banaketa Poisson banaketa bat da, beraz bere probabilitate legea honela definitu dezakegu:
+
+```{r, eval=FALSE}
+getConditionalXGivenZ <- function (x, z) {
+if (z!=0 & z!=1) {
+stop("z-ren balioa 0 edo 1 izan behar du")
+}
+lambda <- 5*z + 1
+return(dpois(x, lambda))
+}
+```
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Bete aurreko kode blokean falta dena eta irudikatu $X|Z$ aldagaiaren probabilitate-legea.
+  \end{minipage}}
+
+\bigskip
+
+
+
+
+Behin bi probabilitate-lege hauek definituta ditugula, teoriatik, badakigu:
+
+$$P(X,Z)= P(X|Z) \cdot P(Z)$$
+Beraz, 
+
+```{r, eval=FALSE}
+getJointProbability <- function (x, z) {
+return(getMarginalZ(z) * getConditionalXGivenZ(x, z))
+}
+```
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Bete aurreko kode blokean falta dena eta irudikatu $(X,Y)$ aldagaiaren probabilitate-legea hiru dimentsiotako grafiko bat erabiliz.
+  \end{minipage}}
+
+\bigskip
+
+
+```{r}
+
+#ardatzei balioak eman
+x <- 0:10
+z <- 0:1
+prob <- outer(x, z, Vectorize(getJointProbability))
+
+barplot(prob[, 1])
+barplot(prob[, 2])
+```
+
+
+
+
+## Ariketak
+
+Aurreko adibidea jarraituz, erantzun honako galdera hauei (berrikusi klaseko gardenkiak, behar baduzu):\bigskip
+
+**1.1. ariketa** Lortu $X$ren bazter banaketa eta irudikatu grafiko batean.\bigskip
+
+```{r}
+getMarginalX <- function(x){
+  return(getJointProbability(x, 0) + getJointProbability(x, 1))
+}
+x <- 0:20
+prob <- getMarginalX(x)
+
+barplot(prob, names.arg = x)
+```
+
+
+**1.2. ariketa** Zein da $Z$ren banaketa baldintzatua, $X$a jakinda? Idatzi funtzio bat banaketa honen balio teorikoak itzuliko dituena. \bigskip
+
+$$P(Z|X)= \frac{P(Z) \cdot P(X|Z)}{P(X)} = \frac{P(X, Z)}{P(X)}$$
+
+```{r}
+getConditionalZGivenX <- function(x, z){
+  return(getJointProbability(x, z)/getMarginalX(x))
+}
+```
+
+ 
+**1.3. ariketa** Kalkulatu $E(X | Z=z)$.\bigskip
+
+Badakigu $X \sim Poisson(5Z+1)$ eta $E(Poisson(\lambda)) = \lambda$
+
+```{r}
+getConditionalExpectedXgivenZ <- function(z){
+  return(5*z+1)
+}
+
+```
+
+
+
+**1.4. ariketa** Nola kalkulatuko zenuke $E(Z | X=x)$? Sortu funtzio bat $E(Z | X=x)$ balioa itzuliko duena $x$ balio ezberdinetarako eta irudikatu barra diagrama bat erabiliz. \bigskip
+
+
+
+# Balio teoriko eta esperimentalen konparazioa
+
+Tutorialaren bigarren atal honetan, $(X,Z)$ aldagaiaren banaketatik lagin bat aterako dugu eta ondoren behaketa hauek probabilitate banaketa teorikoa jarraitzen dutela konprobatuko dugu.
+
+Horretarako, simula ditzagun $(X, Z)$ bikotearen $n=5000$ behaketa. Horretarako, honako funtzio errekurtsiboa definituko dugu, behaketa bat ala gehiago sortzeko balioko duena.
+
+```{r}
+sampleJointDistribution <- function (n.sim, p=1/3, 
+                                     lambda=function(z){5*z + 1}) {
+  if (n.sim==1) {
+    z <- runif(1) <= p
+    x <- rpois(1, lambda(z))
+    return (c(x, z))
+  }else{
+    samps <- sapply(1:n.sim, 
+                    FUN=function(i) {
+                     return(sampleJointDistribution(1, p, lambda))
+                    })
+    df <- data.frame(X=samps[1, ], Z=samps[2, ])
+    return(df)
+  }
+}
+```
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Azaldu aurreko kode blokeko 4. lerroa. Zer egiten du?
+  \end{minipage}}
+
+\bigskip
+
+
+
+
+Behin funtzioa definituta, lagina lortzeko erabili dezakegu:
+
+```{r}
+joint.sample <- sampleJointDistribution(5000)
+```
+
+Simulatutako laginaren arabera kalkulatu ditzagun orain $Z$ren maiztasun erlatiboak eta konparatu ditzagun probabilitate-lege teorikoarekin. 
+
+```{r}
+empirical.freq <- table(joint.sample$Z) / nrow(joint.sample)
+```
+
+Orain, laginean agertzen diren balioetarako, ikus dezagun zein den probabilitate marginal teorikoa: 
+
+```{r}
+z.values <- as.numeric(names(empirical.freq))
+theorical.prob <- sapply(z.values, FUN=getMarginalZ)
+```
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Maiztasun erlatiboak eta probabilitate teorikoak konparatu barra-diagrama bat erabiliz.
+  \end{minipage}}
+
+\bigskip
+
+
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Egin ezazu gauza bera $X$ aldagaiarentzako.
+  \end{minipage}}
+
+\bigskip
+
+\bigskip
+
+## Ariketak
+
+Aurreko adibideak jarraituz, erantzun itzazu honako galdera hauek:\bigskip
+
+**2.1. ariketa** Kalkulatu itzazu behatutako lagineko $(x, z)$ konbinazio bakoitzeko bikotearen maiztasun erlatiboak. Konparatu lortutako emaitzak 1.1. atalean kalkulatu duzun baterako probabilitate balio teorikoekin. Zer ondorioztatzen duzu? \bigskip
+
+
+  
+**2.2. ariketa** Aurreko ataleko `data.frame`etik filtratu $z=1$ betetzen duten kasuak eta, ondoren, $X$-en balio posible bakoitzerako irudikatu bere maiztasun erlatiboa. Zein banaketari dagokio? Gehitu iezaiozu grafikoari banaketa teorikoa. \bigskip
+
+
+
+\bigskip
+
+**2.3. ariketa** Errepika ezazu aurreko atala  $z=0$ den kasurako.\bigskip
+
+
+
+**2.4. ariketa** Adieraz ezazu grafikoki $E_k = \frac{\sum_{i=1}^kx_iz_i}{\sum_i z_i}$, $k=1, 2, \ldots, n$-rako, $(x_i, z_i)$ sortu dugun `joint.sample` `data.frame`eko i. lerroko balioak izanik. Zer ikusten duzu? Arrazoitu ikusten den konbergentzia. \bigskip
+
+
+
+
+**2.5. ariketa** Errepikatu aurreko atala $F_k = \frac{\sum_{i=1}^kx_i(1 - z_i)}{\sum_i (1 - z_i)}$ baliorako.\bigskip
+
+

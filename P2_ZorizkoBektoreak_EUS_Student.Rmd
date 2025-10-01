@@ -1,0 +1,234 @@
+---
+title: Zorizko bektoreak I
+author:  Usue Mori
+urlcolor: blue
+output: html_document
+---
+
+
+Praktika honetan 2 dimentsiotako zorizko aldagaien dentsitate funtzioak irudikatzen ikasiko dugu. 
+
+# Bi aldagaietako funtzio diskretuen irudikapena
+
+ $(X,Y)$ zorizko aldagaiak bi txanpon jaurtitzean lortutako emaitza jasotzen du, non $X \in \{A, B\}$ eta $Y \in \{A, B\}$. Bi dimentsiotako aldagai diskretu honen probabilitate masa funtzioa honakoa da: 
+ 
+ $$P(X=x, Y=y)= \left\{
+\begin{array}{cc}
+1/4 , &  (x, y) \in \{A, B\} \times \{A, B\}\\
+0 , & \mbox{bestela}
+\end{array}
+ \right.$$
+ 
+
+Honelako funtzio bat irudikatzeko 3 dimentsiotako barra diagramak erabiliko ditugu, adibidez,  eta horretarako, `rgl` eta `barplot3d` paketeak instalatu beharko ditugu (ez badaude iada instalatuta). Lehenengoa CRANen topa dezakegu, beraz instalazioa zuzenean honela egin dezakegu:
+
+```{r, eval=FALSE}
+install.packages("rgl")
+```
+
+Aldiz, `barplot3d` paketea CRANetik ezabatua izan da, mantentze-lanak ez burutzeagatik, baina, pakete honen azken bertsioa CRANeko artxiboan topa dezakegu, honako helbidean: https://cran.r-project.org/src/contrib/Archive/barplot3d/barplot3d_1.0.1.tar.gz. Paketea deskargatu ostean, honela instalatu dezakegu:
+
+```{r, eval=FALSE}
+#OHARRA: Ziurrenik fitxategiaren helbidea aldatu beharko duzu
+install.packages("./barplot3d_1.0.1.tar.gz", repos=NULL, source=TRUE)
+```
+
+Orain, funtzioa  irudikatuko dugu grafiko interaktibo bat erabiliz:
+
+```{r, warning=FALSE, message=FALSE}
+library(rgl)
+library(barplot3d)
+probabilities <- rep(1/4, 4)
+barplot3d(rows=4, cols = 1, z=probabilities, xlabels = c("A","B", 3, 3), ylabels= c("A"),
+          topcolors="grey")
+rglwidget(); close3d()
+```
+
+$~$
+<div style="background-color:  #eff83a  ; padding: 10px; border: 1px solid yellow;"> 
+<p><strong>Ariketa:</strong> Begiratu laguntzan `barplot3d` funtzioaren laguntza eta aldatu parametro batzuk. Nola aldatzen da irudia?
+</p>
+</div>
+$~$
+
+
+
+# Bi aldagaietako funtzio jarraituen irudikapena
+
+Demagun $z = x^2 + y^2$ funtzioa irudikatu nahi dugula, non $x,y \in {\rm I\!R}$. Azken finean, gainazal bat da irudikatu behar
+duguna. Horrela, lehenik eta behin, zein $x$ eta $y$ balio multzotarako irudikatu nahi dugun zehaztu behar dugu. Adibidez:
+
+```{r}
+x <- seq(-5, 5, length.out=100)
+y <- seq(-5, 5, length.out=100)
+```
+
+
+$~$
+<div style="background-color:  #eff83a  ; padding: 10px; border: 1px solid yellow;"> 
+<p><strong>Ariketa:</strong> Zein $x$ eta $y$ balio definitzen ditu aurreko kodeak? Nola aldatuko zenuke kodea balioen tarte handiago bat hartzeko? Eta tarte horretan bertan balio gehiago hartzeko?
+</p>
+</div>
+$~$
+
+Bestetik, $(x, y)$ puntua emanik, dagokion irudia kalkulatuko duen funtzioa definitu behar dugu:
+
+```{r}
+f <- function(x,y) {
+  return(x^2 + y^2)
+}
+```
+
+Ondoren, funtzio honen balioa kalkulatuko dugu aukeratu ditugu $x$ eta $y$ balioen konbinazio posible guztietarako. Horretarako Rko `outer` funtzioa erabiliko dugu, zeinak nahi dugun funtzioa (kasu honetan `f`) aplikatu dien bi bektoreen balioen produktu kartesiarrari (hau da, konbinazio posible guztiei):
+
+```{r}
+z <- outer(X=x, Y=y, FUN=f)
+dim(z)
+```
+$~$
+<div style="background-color:  #eff83a  ; padding: 10px; border: 1px solid yellow;"> 
+<p><strong>Ariketa:</strong> Bistaratu `z` objektua Rn. Zein motako objektua da? Ze informazio jasotzen du eta nola? 
+</p>
+</div>
+$~$
+
+
+
+
+Behin balioak definituta ditunenean, 3 dimentsiotako funtzio bat irudikatzeko modurik errazena Rko  `persp` funtzioa erabiltzea da:
+
+```{r, fig.align='center'}
+persp(x, y, z)
+```
+
+Irudia bira dezakegu norabide bertikalean zein ezker-eskuin, `phi` eta `theta` argumentuekin:
+
+```{r, fig.align='center' }
+persp(x, y, z, phi=40, theta=40)
+```
+
+Irudiaren hainbat ezaugarri (izenburua, kolorea, itzala. . . ) ere gure interesen arabera aldatu ditzakegu:
+
+```{r, fig.align='center'}
+persp(x, y, z, phi=40, theta=40, 
+      main="f gainazala", col="lightblue", border=NA, shade=0.2)
+```
+
+
+$~$
+<div style="background-color:  #eff83a  ; padding: 10px; border: 1px solid yellow;"> 
+<p><strong>Ariketa:</strong> Irudikatu grafiko bera kolorea, izenburua, itzalak, etab. aldatuz.
+</p>
+</div>
+$~$
+
+
+
+$~$
+<div style="background-color:  #eff83a  ; padding: 10px; border: 1px solid yellow;"> 
+<p><strong>Ariketa:</strong> Grafikoak interaktibo egiteko `rgl` paketeko funtzioak erabili ditzakegu, adibidez `persp3d`. Begiratu laguntzan funtzio hau nola erabiltzen den eta egin $f(x)$ funtzioaren irudikapen interaktiboa.
+</p>
+</div>
+$~$
+
+
+
+3 dimentsiotako irudiak aztertzea ez da beti erraza, eta batzuetan errazagoa izan daiteke sestra kurbak irudikatzea edo/eta bero-mapak erabiltzea. Lehenengo motako kurbak (sestra-kurbak) Rko `contour` funtzioarekin irudikatu ditzakegu eta bero-mapak, aldiz, `image` funtzioarekin:
+
+```{r, fig.width=4, fig.align='center'}
+image(x, y, z)
+contour(x, y, z, add=TRUE)
+```
+
+$~$
+<div style="background-color:  #eff83a  ; padding: 10px; border: 1px solid yellow;"> 
+<p><strong>Ariketa:</strong> Rko laguntza erabiliz, aldatu `image` funtzioaren kolore paleta.
+</p>
+</div>
+$~$
+
+
+# Ariketak
+
+**1. ariketa** Txanpon bat hiru aldiz jaurtitzen dugu. $X$ aldagaiak aurpegi kopurua jasoko du, eta $Y$ aldagaiak aldiz honako arauak dituen jokotik lortutako irabaziak: 
+
+  1. Jokalariak euro 1 irabaziko du 1. aurpegia 1. jaurtiketan lortzen bada. 
+  2. Jokalariak euro 2 irabaziko du 1. aurpegia 2. jaurtiketan lortzen bada. 
+  3. Jokalariak euro 3 irabaziko du 1. aurpegia 3. jaurtiketan lortzen bada. 
+  4. Jokalariak euro 1 galduko du aurpegirik ez bada ateratzen 3 jaurtiketetan.
+
+ 
+Lortu eta irudikatu barra diagrama bat erabiliz $(X,Y)$ aldagaiaren baterako probabilitate-masa funtzioa.
+
+
+```{r}
+
+```
+
+
+
+
+**2. ariketa** Irudika ezazu honako baterako dentsitate funtzio hau (gelako ariketa zerrendako 1.13 ariketakoa):
+
+$$f(x, y)= \left\{
+\begin{array}{cc}
+xy , &  (x, y) \in (0, 2)\times (0, 1)\\
+0 , & \mbox{bestela}
+\end{array}
+ \right.$$
+ 
+Eredu horretatik nolako behaketak lortuko genituzke?
+ 
+$~$$~$
+
+**3. ariketa** Bi aldagaitako banaketa normala oso banaketa ezaguna da; $(X_1, X_2)' \sim N(\mathbf{\mu}, \mathbf{\Sigma})$ moduan adierazi ohi
+da, non:
+
+$$\mu = \left( 
+\begin{array}{c}
+E(X_1)\\
+E(X_2)
+\end{array}
+\right) \; \mbox{ y } \; \Sigma = \left( 
+\begin{array}{cc}
+VAR(X_1) & COV(X_1, X_2)\\
+COV(X_1, X_2) & VAR(X_2)
+\end{array}
+\right) 
+$$
+$(X_1, X_2)$-ren baterako dentsitate funtzioa honako hau da:
+
+$$f(\mathbb{x})= \frac{ \exp{\left\{-\frac{1}{2}(\mathbb{x}-\mu)^T\Sigma^{-1}(\mathbb{x}-\mu)\right\}}}{2\pi \sqrt{|\Sigma|}},$$ non
+
+$$\mathbb{x}=\left( 
+\begin{array}{c}
+x_1\\
+x_2
+\end{array}\right) $$
+
+
+  1. $\Sigma$ matrizea emanik, nola kalkulatzen da $X_1$ eta $X_2$ren arteko korrelazioa?
+  2. Sortu Rn bi dimentsiotako banaketa normalaren dentsitate funtzioa kalkulatzeko balio duen funtzio bat. Probatu funtzioa $\mu=(0,0)^T$ eta $\Sigma=I_2$ balioetarako.
+  3. Bilatu bi dimentsiotako banaketa normalaren dentsitate funtzioaren inplementatzen duen Rko berezko paketeren bat. 
+  4.  $Var(X_1)$ eta $Var(X_2)$ balio jakin batzuetarako (aukeratu nahi dituzunak), irudikatu dentsitate funtzioa korrelazio koefiziente balio ezberdinetarako. Erabili zuek sortutako funtzioa eta Rren berezko funtzioa eta konparatu emaitzak.
+
+
+**4. problema** Dirichlet banaketa Beta banaketaren orokorpen bat da. $K \ge 2$ ordenako eta $(\alpha_1, \ldots, \alpha_K)$ parametroko ($\alpha_i > 0$) Dirichlet banaketa honelako baterako dentsitate funtzioaren bitartez definitzen da: 
+  
+  
+$$f(x_1, \ldots, x_K) = \left\{
+\begin{array}{cc}
+\frac{1}{N}\prod_{i=1}^Kx_i^{\alpha_i-1} &  (x_1, \ldots, x_K) \in (0,1)^K \mbox{ y } \sum_i x_i = 1\\
+0 , & \mbox{en otro caso}
+\end{array}
+ \right.$$
+ 
+   Non $N$ normalizazio konstantea den:
+   
+   $$N=\frac{\prod_{i=1}^K\Gamma(\alpha_i)}{\Gamma(\sum_{i=1}^K \alpha_i)}$$
+  
+  1. Kontsidera ezazu $K=2$ ordenako Dirichlet banaketaren baterako dentsitate funtzioa parametro ezberdinentzako eta irudikatu ezazu $X_1$  balioetarako.  
+  2. Kontsidera ezazu $K=3$ ordenako Dirichlet banaketaren baterako dentsitate funtzioa parametro ezberdinentzako eta irudikatu ezazu $X_1$ eta $X_2$  balioetarako.  
+
+OHARRA: Irudikapenak egiteko, normalizazio konstanteaz ahaztu zaitezkete.
+  

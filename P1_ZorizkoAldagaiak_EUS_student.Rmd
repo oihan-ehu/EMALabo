@@ -1,0 +1,240 @@
+---
+title: Zorizko aldagaiak
+# author:  Itziar Irigoien, Borja Calvo, Usue Mori
+date: '\mbox{ }'
+classoptions: gipuzkoa, eu, foot
+name: Usue Mori, Jon Vadillo, Itziar Irigoien, Borja Calvo 
+course: Estatistika Metodo Aurreratuak
+tel: '\mbox{ }'
+mail: '[usue.mori, jon.vadillo, itziar.irigoien, borja.calvo]\@ehu.eus'
+address: | 
+         | Manuel de Lardizabal, 1
+         | 20018 Donostia
+header-includes: \usepackage{xcolor}
+urlcolor: blue
+output:
+  pdf_document:
+    keep_tex: false
+---
+
+
+
+
+Praktika honetan, batetik R lengoiako aspektu oinarrizko batzuk gogoratuko ditugu eta bestetik zorizko aldagaien inguruko kontzeptuak errepasatu. 
+
+# Zorizko aldagaien definizioa: dentsitate (probabilitate-masa) eta banaketa funtzioak
+
+Teknologia enpresa batek $X$ zorizko aldagaia erabiltzen du, astero, sare bat zenbat aldiz erortzen den modelatzeko. Aldagai honen probabilitate-masa funtzioa honakoa da:
+
+$$f(x)=P(X=x)=\frac{e^{-1}}{x!}, \,\,\,\,\,\,\,\,\,\,\,\, x=0, 1, 2, ...$$
+Hasteko definitu dezagun Rn funtzio hau eta irudikatu dezagun: 
+
+```{r, out.height= "200px"}
+#Definizioa
+MasaFuntzioa <- function(x){
+        return(exp(-1)/factorial(x))
+}
+
+#Irudikapena
+x <- 0:20
+plot(x, MasaFuntzioa(x), type="b", ylab="P(X=x)")
+``` 
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Kalkulatu `MasaFuntzioa` funtzioa erabiliz $P(X=1)$, $P(X>3)$ eta $P(X<=11)$.
+  \end{minipage}}
+
+\bigskip
+
+```{r}
+MasaFuntzioa(1)
+1 - sum(MasaFuntzioa(0:3))
+sum(MasaFuntzioa(0:11))
+```
+ 
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][1cm][t]{15cm}
+  \textbf{Ariketa:} Definitu `BanaketaFuntzioa` funtzioa $X$ aldagaiaren probabilitate metatua ematen duena $F(x)=P(X \leq x)$ eta kalkulatu funtzio hori erabiliz $P(X>3)$ eta $P(X<=11)$. Saiatu funtzioa definitzean `sapply` funtzioa erabiltzen `for` ziklo bat beharrean.
+  \end{minipage}}
+
+\bigskip
+
+```{r}
+
+BanaketaFuntzioa <- function(x) {
+  return(sum(sapply(0:x, MasaFuntzioa)))
+}
+
+1 - BanaketaFuntzioa(3)
+BanaketaFuntzioa(11)
+
+```
+
+
+# Banaketa ezagunak aztertzeko Rko funtzioak
+
+Apur bat fijatuz gero, erraz ikus daiteke, $X$ aldagaia $\lambda=1$ parametroko Poisson banaketa bat dela. Hau horrela izanik, Rk definituta dauzka hainbat funtzio banaketa ezagunekin lan egitea asko erraztuko digutenak. 
+
+Hasteko, dentsitate edo probabilitate masa funtzioa `dbanaketa` motako funtzioetan dago definituta, gure kasuan `dpois` funtzioan, hain zuzen ere:
+
+```{r}
+dpois(x=1, lambda=1) #P(X=1)
+```
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} $X$ aldagaiari jarraituz, zein da aste batean sarea 2 aldiz erortzeko probabilitatea?
+  \end{minipage}}
+
+\bigskip
+
+```{r}
+dpois(x=2, lambda = 1)
+```
+
+
+Gainera, probabilitate metatuaren funtzioa `pbanaketa` motako funtzioetan aurki dezakegu:
+
+```{r}
+ppois(q=2, lambda=1, lower.tail=TRUE) #P(X<=2)
+```
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Erabili Rren laguntza `ppois` funtzioa zuzenean erabiliz $P(X>4)$ nola kalkulatzen den ikasteko.
+  \end{minipage}}
+
+\bigskip
+
+```{r}
+ppois(q=4, lambda = 1, lower.tail = FALSE)
+```
+
+
+Hirugarrenik, banaketaren kuantilak eta pertzentilak `qbanaketa` motako funtzioekin lor ditzakegu:
+
+```{r}
+qpois(p=0.5, lambda=1, lower.tail=TRUE) #P(X<=a)=0.5
+```
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Zer esan nahi du aurreko kode zatian lortutako zenbakiak? Nola deitzen da balio hori?
+  \end{minipage}}
+
+\bigskip
+
+Balio horren ezkerrean banaketaren erdia dagoela, horri mediana deitzen zaio
+
+
+Azkenik, edozein banaketa ezaguneko ausazko lagin bat lortzeko `rbanaketa` motako funtzioak erabil ditzakegu. Adibidez Poisson(1) banaketatik 10 aleko lagin bat honela lor dezakegu:
+
+```{r}
+rpois(10, lambda=1)
+```
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Aurreko kodean lortutako lagina $X$ aldagaiaren lagin bat bada, zer esan nahi dute balioek? Suposatu orain $X~Poisson(4)$ dela. Lortu ausazko lagin bat eta esan nola aldatu diren balioak.
+  \end{minipage}}
+
+\bigskip
+
+Balioak esperimentu baten lau lagin dira
+
+```{r}
+rpois(10, lambda=4)
+```
+
+Laginak handiagoak dira
+
+
+# Ariketak
+
+**1. ariketa** $X$ zorizko aldagaiak ondorengo dentsitate-funtzioa du: 
+$$f(x)= \left\{
+\begin{array}{cc}
+1 - |1-x| , &  0 < x < 2\\
+0 , & \mbox{bestela}
+\end{array}
+ \right.$$
+ 
++ Definitu eta irudikatu dentsitate-funtzioa. Horren arabera, zein da $EX$? Adierazi itxaropena aurreko grafikoan lerro bertikal berde bat gehituz.
+
+
+```{r}
+f <- function(x) {
+  if (x <= 0 | x >= 2) return(0)
+  return(1-abs(1-x))
+}
+
+x <- seq(-1, 3, 0.1)
+f <- Vectorize(f)
+plot(x, f(x), type = "l")
+
+#EX = 1 da
+
+abline(v = 1, col = "green")
+
+```
+
+
+ 
++ Kalkulatu dagokion banaketa-funtzioa eskuz eta marraztu. Horren arabera, zein da $Q_3$?
+
+
+
++ Begiratu Rko laguntzan `integrate` funtzioari buruzko informazioa. Erabili funtzio hau $EX$ kalkulatzeko eta banaketa-funtzioa zuzenean lortzeko (eskuz kalkulatu gabe).
+
+```{r}
+
+integrate(function(x){x * f(x)}, 0, 2)
+
+banaketaF <- function(y){
+  integrate(f, 0, y)
+}
+
+banaketaF(1)
+
+```
+
+ 
+\bigskip
+
+
+**2. ariketa** Zorizko aldagai jarraituen hainbat **banaketa ezagunekin** lan egingo dugu. Kasu bakoitzean:
+
+ | Banaketak|  |      |
+ |:-----|:-----|:-----|
+ |$X \sim \mathcal{U}(0,1)$|$X \sim Beta(1,1)$|$X \sim Beta(15,1)$|
+ |$X \sim Beta(15,15)$|$X \sim Exp(5)$|$X \sim Gamma(5, 10)$|
+ |$X \sim N(5, 10)$| $X \sim N(5, 1)$| $X \sim t_{2}$|
+ |$X \sim t_{30}$| $X \sim \chi^2_1$ |$X \sim \chi^2_6$|
+ 
++ Marraztu dentsitate-funtzioa. Horren arabera ondorioztatu gutxi-gora-behera $EX$ren balioa. Egiaztatu teoriako emaitzekin.
++ Kalkulatu $x_0$ non $P(X \leq x_0) = 0.9$ den.
++ Kalkulatu $P(X < a)$, zuk aukeratutako $a < EX$ balio baterako.
+
+
+
+
