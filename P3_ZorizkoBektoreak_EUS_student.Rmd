@@ -51,7 +51,7 @@ return(r)
 
 Bestalde, $X|Z$ aldagai baldintzatuaren banaketa Poisson banaketa bat da, beraz bere probabilitate legea honela definitu dezakegu:
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 getConditionalXGivenZ <- function (x, z) {
 if (z!=0 & z!=1) {
 stop("z-ren balioa 0 edo 1 izan behar du")
@@ -78,7 +78,7 @@ Behin bi probabilitate-lege hauek definituta ditugula, teoriatik, badakigu:
 $$P(X,Z)= P(X|Z) \cdot P(Z)$$
 Beraz, 
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 getJointProbability <- function (x, z) {
 return(getMarginalZ(z) * getConditionalXGivenZ(x, z))
 }
@@ -152,7 +152,14 @@ getConditionalExpectedXgivenZ <- function(z){
 
 **1.4. ariketa** Nola kalkulatuko zenuke $E(Z | X=x)$? Sortu funtzio bat $E(Z | X=x)$ balioa itzuliko duena $x$ balio ezberdinetarako eta irudikatu barra diagrama bat erabiliz. \bigskip
 
+$$E(Z | X=x) = \sum_{z\in\Omega_z}z\cdot P(Z=z|X=x)$$
+$$0\cdot P(Z=0|X=x)+1\cdot P(Z=1|X=x)=P(Z=1|X=x)$$
+```{r}
+getConditionalExpectedZgivenX <- function(x){
+  return(getConditionalZGivenX(x, 1))
+}
 
+```
 
 # Balio teoriko eta esperimentalen konparazioa
 
