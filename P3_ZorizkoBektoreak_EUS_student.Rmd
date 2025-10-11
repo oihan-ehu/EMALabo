@@ -34,6 +34,8 @@ Izan bedi $(X, Z)$ zorizko aldagai bikotea, ondorengo banaketa duena:
   \begin{minipage}[c][0.5cm][t]{15cm}
   \textbf{Ariketa:} Zein probabilitate-banaketa ezagun jarraitzen du $Z$ aldagaiak?
   \end{minipage}}
+  
+Bernoulli($\frac{1}{3}$) jarraitzen du.
 
 \bigskip
 
@@ -195,13 +197,15 @@ sampleJointDistribution <- function (n.sim, p=1/3,
 
 \bigskip
 
-
+$r$ri balio bat esleitzen dio $poisson(lambda(z))$ banaketa jarraitzen duena.
 
 
 Behin funtzioa definituta, lagina lortzeko erabili dezakegu:
 
 ```{r}
-joint.sample <- sampleJointDistribution(5000)
+n <- 5000
+
+joint.sample <- sampleJointDistribution(n)
 ```
 
 Simulatutako laginaren arabera kalkulatu ditzagun orain $Z$ren maiztasun erlatiboak eta konparatu ditzagun probabilitate-lege teorikoarekin. 
@@ -226,6 +230,13 @@ theorical.prob <- sapply(z.values, FUN=getMarginalZ)
   \end{minipage}}
 
 \bigskip
+```{r}
+
+barplot(rbind(theorical.prob, empirical.freq), beside=TRUE,
+        legend.text = c("Maiztasun erlatiboak", "Probabilitate teorikoak"),
+        names.arg = names(empirical.freq))
+
+```
 
 
 
@@ -236,6 +247,17 @@ theorical.prob <- sapply(z.values, FUN=getMarginalZ)
   \begin{minipage}[c][0.5cm][t]{15cm}
   \textbf{Ariketa:} Egin ezazu gauza bera $X$ aldagaiarentzako.
   \end{minipage}}
+  
+```{r}
+empirical.freq <- table(joint.sample$X) / nrow(joint.sample)
+x.values <- as.numeric(names(empirical.freq))
+theorical.prob <- sapply(x.values, FUN=getMarginalX)
+
+barplot(rbind(theorical.prob, empirical.freq), beside=TRUE,
+        legend.text = c("Maiztasun erlatiboak", "Probabilitate teorikoak"),
+        names.arg = names(empirical.freq))
+```
+  
 
 \bigskip
 
@@ -247,23 +269,76 @@ Aurreko adibideak jarraituz, erantzun itzazu honako galdera hauek:\bigskip
 
 **2.1. ariketa** Kalkulatu itzazu behatutako lagineko $(x, z)$ konbinazio bakoitzeko bikotearen maiztasun erlatiboak. Konparatu lortutako emaitzak 1.1. atalean kalkulatu duzun baterako probabilitate balio teorikoekin. Zer ondorioztatzen duzu? \bigskip
 
+```{r}
+
+empirical.freq <- table(joint.sample) / nrow(joint.sample)
+x.values <- as.numeric(rownames(empirical.freq))
+z.values <- as.numeric(colnames(empirical.freq))
+theorical.prob = outer(X=x.values, Y=z.values, FUN = Vectorize(getJointProbability))
+barplot(rbind(t(empirical.freq), t(theorical.prob)), beside=TRUE,
+        legend.text = c("0 Empirikoa", "1 Empirikoa", "0 Teorikoa", "1 Teorikoa"))
+
+
+```
+
+Laginaren maiztasun erlatiboak probabilitate teorikoa jarraitzen du.
 
   
 **2.2. ariketa** Aurreko ataleko `data.frame`etik filtratu $z=1$ betetzen duten kasuak eta, ondoren, $X$-en balio posible bakoitzerako irudikatu bere maiztasun erlatiboa. Zein banaketari dagokio? Gehitu iezaiozu grafikoari banaketa teorikoa. \bigskip
 
+Banaketa baldintzatuari dagokio $P(X|Z=1)$.
+
+```{r}
+
+sample.z1 <- joint.sample[joint.sample$Z==1,]
+empirical.freq <- table(sample.z1$X) / nrow(sample.z1)
+x.values = as.numeric(names(empirical.freq))
+theorical.prob <- sapply(x.values, FUN=function(i){return(getConditionalXGivenZ(i, 1))})
+
+barplot(rbind(empirical.freq, theorical.prob), beside=TRUE,
+        legend.text = c("Maiztasun erlatiboak", "Probabilitate teorikoak"))
+
+```
 
 
 \bigskip
 
 **2.3. ariketa** Errepika ezazu aurreko atala  $z=0$ den kasurako.\bigskip
 
+```{r}
 
+sample.z0 <- joint.sample[joint.sample$Z==0,]
+empirical.freq <- table(sample.z0$X) / nrow(sample.z0)
+x.values = as.numeric(names(empirical.freq))
+theorical.prob <- sapply(x.values, FUN=function(i){return(getConditionalXGivenZ(i, 0))})
+
+barplot(rbind(empirical.freq, theorical.prob), beside=TRUE,
+        legend.text = c("Maiztasun erlatiboak", "Probabilitate teorikoak"))
+
+```
 
 **2.4. ariketa** Adieraz ezazu grafikoki $E_k = \frac{\sum_{i=1}^kx_iz_i}{\sum_i z_i}$, $k=1, 2, \ldots, n$-rako, $(x_i, z_i)$ sortu dugun `joint.sample` `data.frame`eko i. lerroko balioak izanik. Zer ikusten duzu? Arrazoitu ikusten den konbergentzia. \bigskip
 
+```{r}
+k <- 1:n
+xz <- joint.sample$X[k]*joint.sample$Z[k]
 
+E_k <- cumsum(joint.sample$X*joint.sample$Z)/cumsum(joint.sample$Z)
 
+plot(k, E_k, type = "l")
+abline(h=getConditionalExpectedXgivenZ(1), col = "gray")
+```
+
+Konbergentzia $E(X|Z=1)$ da, izan ere $x_kz_k = 0$ da $z_k = 0$ denean, ondorioz $Z=1$ denean $x$ren bataz bestekoa daukagu.
 
 **2.5. ariketa** Errepikatu aurreko atala $F_k = \frac{\sum_{i=1}^kx_i(1 - z_i)}{\sum_i (1 - z_i)}$ baliorako.\bigskip
 
+```{r}
+k <- 1:n
+xz <- joint.sample$X[k]*(1 - joint.sample$Z[k])
 
+E_k <- cumsum(joint.sample$X*(1 - joint.sample$Z))/cumsum(1 - joint.sample$Z)
+
+plot(k, E_k, type = "l")
+abline(h=getConditionalExpectedXgivenZ(0), col = "gray")
+```
