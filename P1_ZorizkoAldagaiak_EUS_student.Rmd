@@ -51,8 +51,11 @@ plot(x, MasaFuntzioa(x), type="b", ylab="P(X=x)")
 \bigskip
 
 ```{r}
+# P(X=1)
 MasaFuntzioa(1)
+# P(X>3)
 1 - sum(MasaFuntzioa(0:3))
+# P(X<=11)
 sum(MasaFuntzioa(0:11))
 ```
  
@@ -73,7 +76,9 @@ BanaketaFuntzioa <- function(x) {
   return(sum(sapply(0:x, MasaFuntzioa)))
 }
 
+# P(X>3)
 1 - BanaketaFuntzioa(3)
+# P(X<=11)
 BanaketaFuntzioa(11)
 
 ```
@@ -97,12 +102,10 @@ dpois(x=1, lambda=1) #P(X=1)
   \textbf{Ariketa:} $X$ aldagaiari jarraituz, zein da aste batean sarea 2 aldiz erortzeko probabilitatea?
   \end{minipage}}
 
-\bigskip
-
 ```{r}
 dpois(x=2, lambda = 1)
 ```
-
+\bigskip
 
 Gainera, probabilitate metatuaren funtzioa `pbanaketa` motako funtzioetan aurki dezakegu:
 
@@ -118,12 +121,11 @@ ppois(q=2, lambda=1, lower.tail=TRUE) #P(X<=2)
   \textbf{Ariketa:} Erabili Rren laguntza `ppois` funtzioa zuzenean erabiliz $P(X>4)$ nola kalkulatzen den ikasteko.
   \end{minipage}}
 
-\bigskip
 
 ```{r}
 ppois(q=4, lambda = 1, lower.tail = FALSE)
 ```
-
+\bigskip
 
 Hirugarrenik, banaketaren kuantilak eta pertzentilak `qbanaketa` motako funtzioekin lor ditzakegu:
 
@@ -139,10 +141,10 @@ qpois(p=0.5, lambda=1, lower.tail=TRUE) #P(X<=a)=0.5
   \textbf{Ariketa:} Zer esan nahi du aurreko kode zatian lortutako zenbakiak? Nola deitzen da balio hori?
   \end{minipage}}
 
-\bigskip
 
 Balio horren ezkerrean banaketaren erdia dagoela, horri mediana deitzen zaio
 
+\bigskip
 
 Azkenik, edozein banaketa ezaguneko ausazko lagin bat lortzeko `rbanaketa` motako funtzioak erabil ditzakegu. Adibidez Poisson(1) banaketatik 10 aleko lagin bat honela lor dezakegu:
 
@@ -158,9 +160,8 @@ rpois(10, lambda=1)
   \textbf{Ariketa:} Aurreko kodean lortutako lagina $X$ aldagaiaren lagin bat bada, zer esan nahi dute balioek? Suposatu orain $X~Poisson(4)$ dela. Lortu ausazko lagin bat eta esan nola aldatu diren balioak.
   \end{minipage}}
 
-\bigskip
+Balioak esperimentu baten hamar lagin dira
 
-Balioak esperimentu baten lau lagin dira
 
 ```{r}
 rpois(10, lambda=4)
@@ -168,6 +169,7 @@ rpois(10, lambda=4)
 
 Laginak handiagoak dira
 
+\bigskip
 
 # Ariketak
 
@@ -202,19 +204,42 @@ abline(v = 1, col = "green")
  
 + Kalkulatu dagokion banaketa-funtzioa eskuz eta marraztu. Horren arabera, zein da $Q_3$?
 
+\[
+F(x) =\int_{-\infty}^{x} f(t)\,dt  = \int_0^x f(t)\,dt =
+\left\{\begin{array}{@{}l@{\thinspace}l}
+  0 &: x < 0\\
+  \int_0^x t\,dt &: 0 \le x \le 1 \\
+  \int_0^1 t\,dt + \int_1^x(2-t)\,dt &: 1 < x \le 2 \\
+  1 &: 2 < x
+\end{array}\right. =
+\left\{\begin{array}{@{}l@{\thinspace}l}
+  0 &: x < 0\\
+  \frac{x^2}{2} &: 0 \le x \le 1 \\
+  2x - \frac{x^2}{2} - 1 &: 1 < x \le 2 \\
+  1 &: 2 < x
+\end{array}\right.
+\]
 
+Honen arabera:
+
+\[
+P(X\le a)=\frac{3}{4}  \implies F(a) = \frac{3}{4} \implies 2a - \frac{a^2}{2} - 1 = \frac{3}{4} \implies
+a = 2 - \frac{1}{\sqrt{2}} \simeq 1.2929
+\]
 
 + Begiratu Rko laguntzan `integrate` funtzioari buruzko informazioa. Erabili funtzio hau $EX$ kalkulatzeko eta banaketa-funtzioa zuzenean lortzeko (eskuz kalkulatu gabe).
 
 ```{r}
-
+#EX
 integrate(function(x){x * f(x)}, 0, 2)
 
 banaketaF <- function(y){
   integrate(f, 0, y)
 }
 
-banaketaF(1)
+#F(Q_3)
+Q_3 = 2 - 1/sqrt(2)
+banaketaF(Q_3)
 
 ```
 
@@ -234,7 +259,3 @@ banaketaF(1)
 + Marraztu dentsitate-funtzioa. Horren arabera ondorioztatu gutxi-gora-behera $EX$ren balioa. Egiaztatu teoriako emaitzekin.
 + Kalkulatu $x_0$ non $P(X \leq x_0) = 0.9$ den.
 + Kalkulatu $P(X < a)$, zuk aukeratutako $a < EX$ balio baterako.
-
-
-
-

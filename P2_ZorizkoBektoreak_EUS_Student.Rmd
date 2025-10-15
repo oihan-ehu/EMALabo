@@ -35,14 +35,41 @@ install.packages("./barplot3d_1.0.1.tar.gz", repos=NULL, source=TRUE)
 
 Orain, funtzioa  irudikatuko dugu grafiko interaktibo bat erabiliz:
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, fig.align='center'}
 library(rgl)
 library(barplot3d)
 probabilities <- rep(1/4, 4)
-barplot3d(rows=4, cols = 1, z=probabilities, xlabels = c("A","B", 3, 3), ylabels= c("A"),
+barplot3d(rows=2, cols = 2, z=probabilities, xlabels = c("A","B"), ylabels= c("A", "B"),
           topcolors="grey")
 rglwidget(); close3d()
 ```
+ 
+
+Bi aldagaietako funtzio jarraituen irudikapena
+Demagun 𝑧=𝑥2+𝑦2
+𝑧
+=
+𝑥
+2
++
+𝑦
+2
+ funtzioa irudikatu nahi dugula, non 𝑥,𝑦∈IR
+𝑥
+,
+𝑦
+∈
+I
+R
+. Azken finean, gainazal bat da irudikatu behar duguna. Horrela, lehenik eta behin, zein 𝑥
+𝑥
+ eta 𝑦
+𝑦
+ balio multzotarako irudikatu nahi dugun zehaztu behar dugu. Adibidez:
+
+x <- seq(-5, 5, length.out=100)
+y <- seq(-5, 5, length.out=100)
+ 
 
 $~$
 <div style="background-color:  #eff83a  ; padding: 10px; border: 1px solid yellow;"> 
@@ -92,7 +119,9 @@ $~$
 </div>
 $~$
 
+Matrize bat da, z[i][j] f(x[i], y[j]) delarik.
 
+\bigskip
 
 
 Behin balioak definituta ditunenean, 3 dimentsiotako funtzio bat irudikatzeko modurik errazena Rko  `persp` funtzioa erabiltzea da:
@@ -122,7 +151,10 @@ $~$
 </div>
 $~$
 
-
+```{r, fig.align='center'}
+persp(x, y, z, phi=30, theta=70, 
+      main="f GAINAZALA", col="gray", border=NA, ltheta = -20, lphi = 30, shade=0.7)
+```
 
 $~$
 <div style="background-color:  #eff83a  ; padding: 10px; border: 1px solid yellow;"> 
@@ -131,7 +163,10 @@ $~$
 </div>
 $~$
 
-
+```{r, fig.align='center'}
+persp3d(x, y, z)
+rglwidget(); close3d()
+```
 
 3 dimentsiotako irudiak aztertzea ez da beti erraza, eta batzuetan errazagoa izan daiteke sestra kurbak irudikatzea edo/eta bero-mapak erabiltzea. Lehenengo motako kurbak (sestra-kurbak) Rko `contour` funtzioarekin irudikatu ditzakegu eta bero-mapak, aldiz, `image` funtzioarekin:
 
@@ -147,6 +182,10 @@ $~$
 </div>
 $~$
 
+```{r, fig.width=4, fig.align='center'}
+image(x, y, z, col = gray.colors(40))
+contour(x, y, z, add=TRUE)
+```
 
 # Ariketak
 
@@ -161,7 +200,17 @@ $~$
 Lortu eta irudikatu barra diagrama bat erabiliz $(X,Y)$ aldagaiaren baterako probabilitate-masa funtzioa.
 
 
-```{r}
+```{r, warning=FALSE, message=FALSE, fig.align='center'}
+
+x <- c(0,    1,   2,  3)
+y <- c(-1,   1,   2,   3)
+z <- c(1/8,  0,   0,   0,
+       0,  1/8, 1/8, 1/8,
+       0,  2/8, 1/8,   0,
+       0,  1/8,   0,   0)
+
+barplot3d(rows=4, cols=4, z=z, ylabels = x, xlabels = y)
+rglwidget(); close3d()
 
 ```
 
@@ -177,6 +226,22 @@ xy , &  (x, y) \in (0, 2)\times (0, 1)\\
 \end{array}
  \right.$$
  
+ 
+```{r, warning=FALSE, message=FALSE, fig.align='center'}
+
+x <- seq(0, 2, by = 0.1)
+y <- seq(0, 1, by = 0.1)
+
+f <- function(x, y) {return (x*y)}
+
+z <- outer(x, y, f)
+
+persp3d(x, y, z, shade=0.4, ltheta=34, lphi=-10, col="gray")
+rglwidget(); close3d()
+
+```
+ 
+ 
 Eredu horretatik nolako behaketak lortuko genituzke?
  
 $~$$~$
@@ -189,7 +254,7 @@ $$\mu = \left(
 E(X_1)\\
 E(X_2)
 \end{array}
-\right) \; \mbox{ y } \; \Sigma = \left( 
+\right) \; \mbox{ eta } \; \Sigma = \left( 
 \begin{array}{cc}
 VAR(X_1) & COV(X_1, X_2)\\
 COV(X_1, X_2) & VAR(X_2)
@@ -208,9 +273,81 @@ x_2
 
 
   1. $\Sigma$ matrizea emanik, nola kalkulatzen da $X_1$ eta $X_2$ren arteko korrelazioa?
+  
+\[
+CORR(X_1, X_2) = \frac{COV(X_1, X_2)}{\sqrt{VAR(X_1)VAR(X_2)}}
+\]
+  
   2. Sortu Rn bi dimentsiotako banaketa normalaren dentsitate funtzioa kalkulatzeko balio duen funtzio bat. Probatu funtzioa $\mu=(0,0)^T$ eta $\Sigma=I_2$ balioetarako.
+  
+```{r}
+
+f <- function(x, Sigma=diag(length(x)), m=rep(0, length(x))){
+  k <- length(x)
+  det_Sigma <- det(Sigma)
+  inv_Sigma <- solve(Sigma)
+  coef <- 1 / ((2 * pi)^(k / 2) * sqrt(det_Sigma))
+  exp_term <- exp(-0.5 * t(x) %*% inv_Sigma %*% x)
+  return(as.numeric(coef * exp_term))
+}
+
+```
+  
+  
   3. Bilatu bi dimentsiotako banaketa normalaren dentsitate funtzioaren inplementatzen duen Rko berezko paketeren bat. 
+  
+```{r, eval=FALSE}
+
+install.packages("mvtnorm")
+
+```
+  
+```{r}
+
+library(mvtnorm)
+
+eps <- 1e-16
+a <- rnorm(2)
+dmvnorm(a) - f(a) < eps
+
+```
+
+  
   4.  $Var(X_1)$ eta $Var(X_2)$ balio jakin batzuetarako (aukeratu nahi dituzunak), irudikatu dentsitate funtzioa korrelazio koefiziente balio ezberdinetarako. Erabili zuek sortutako funtzioa eta Rren berezko funtzioa eta konparatu emaitzak.
+
+```{r, fig.align='center'}
+var1 <- runif(1, 0.3, 3)
+var2 <- runif(1, 0.3, 3)
+cov <- runif(1, -sqrt(var1*var2), sqrt(var1*var2))
+sigma <- matrix(c(var1, cov, cov, var2), 2)
+
+y <- x <- seq(-10, 10, length.out=40)
+xy <- expand.grid(x, y)
+density <- apply(xy, 1, function(row)f(as.numeric(row), Sigma = sigma))
+density2 <- apply(xy, 1, function(row)dmvnorm(as.numeric(row), sigma = sigma))
+
+# f
+persp3d(x, y, matrix(density, 40),
+      main="Dentstate funtzioa f",
+      col="gray",zlab = "Denstitatea",
+      border=NA, ltheta = -20, lphi = 30, shade=0.7)
+rglwidget(); close3d()
+
+# dmvnorm
+persp3d(x, y, matrix(density2, 40),
+      main="Dentstate funtzioa dmvnorm",
+      col="gray",zlab = "Denstitatea",
+      border=NA, ltheta = -20, lphi = 30, shade=0.7)
+rglwidget(); close3d()
+
+# diferentzia
+persp3d(x, y, matrix(density-density2, 40),
+      main="Dentstate funtzioen diferentzia",
+      col="gray",zlab = "Denstitatea",
+      border=NA, ltheta = -20, lphi = 30, shade=0.7)
+rglwidget(); close3d()
+
+```
 
 
 **4. problema** Dirichlet banaketa Beta banaketaren orokorpen bat da. $K \ge 2$ ordenako eta $(\alpha_1, \ldots, \alpha_K)$ parametroko ($\alpha_i > 0$) Dirichlet banaketa honelako baterako dentsitate funtzioaren bitartez definitzen da: 
@@ -226,9 +363,72 @@ $$f(x_1, \ldots, x_K) = \left\{
    Non $N$ normalizazio konstantea den:
    
    $$N=\frac{\prod_{i=1}^K\Gamma(\alpha_i)}{\Gamma(\sum_{i=1}^K \alpha_i)}$$
+
+```{r, fig.align='center'}
+dirichlet <- function(x, alpha=rep(1, length(x))) {
+  if (any(x <= 0) || abs(sum(x) - 1) > 1e-6) return(0)
   
+  gamma_sum <- gamma(sum(alpha))
+  gamma_prod <- prod(gamma(alpha))
+  coef <- gamma_sum / gamma_prod # Normalizazioa
+  
+  prod_term <- prod(x^(alpha - 1))
+  return(coef * prod_term)
+}
+```
+
   1. Kontsidera ezazu $K=2$ ordenako Dirichlet banaketaren baterako dentsitate funtzioa parametro ezberdinentzako eta irudikatu ezazu $X_1$  balioetarako.  
+  
+```{r, fig.align='center'}
+n <- 101
+y <- x <- seq(0, 1, length.out = n)
+alpha <- c(0.2, 0.6)
+xy <- expand.grid(x, y)
+density <- apply(xy, 1, function(row)dirichlet(as.numeric(row), alpha = alpha))
+density <- matrix(density, n)
+
+plot(x, colSums(density), t="l", xlab = "Dentsitatea")
+```
+  
+  
   2. Kontsidera ezazu $K=3$ ordenako Dirichlet banaketaren baterako dentsitate funtzioa parametro ezberdinentzako eta irudikatu ezazu $X_1$ eta $X_2$  balioetarako.  
+
+```{r, fig.align='center'}
+n <- 101
+y <- x <- seq(0, 1, length.out = n)
+alpha <- c(0.9, 0.8, 2)
+xy <- expand.grid(x, y)
+density <- apply(xy, 1, function(row)dirichlet(as.numeric(c(row, 1-sum(row))), alpha = alpha))
+density <- matrix(density, n)
+
+persp3d(x, y, density,
+      main="Dentstate funtzioa f",
+      col="gray",zlab = "Denstitatea",
+      border=NA, ltheta = -20, lphi = 30, shade=0.7)
+rglwidget(); close3d()
+
+image(x, y, density, col = gray.colors(1000))
+contour(x, y, density, add=TRUE)
+```
+
+```{r, fig.align='center'}
+n <- 101
+y <- x <- seq(0, 1, length.out = n)
+alpha <- c(2, 2, 1)
+xy <- expand.grid(x, y)
+density <- apply(xy, 1, function(row)dirichlet(as.numeric(c(row, 1-sum(row))), alpha = alpha))
+density <- matrix(density, n)
+
+persp3d(x, y, density,
+      main="Dentstate funtzioa f",
+      col="gray",zlab = "Denstitatea",
+      border=NA, ltheta = -20, lphi = 30, shade=0.7)
+rglwidget(); close3d()
+
+image(x, y, density, col = gray.colors(1000))
+contour(x, y, density, add=TRUE)
+```
+
 
 OHARRA: Irudikapenak egiteko, normalizazio konstanteaz ahaztu zaitezkete.
   
