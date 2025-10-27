@@ -1,0 +1,422 @@
+---
+title: P5 - Bootstrap
+# author:  Itziar Irigoien, Borja Calvo, Usue Mori
+date: '\mbox{ }'
+classoptions: gipuzkoa, eu, foot
+name: Jon Vadillo, Usue Mori, Itziar Irigoien, Borja Calvo
+course: Estatistika Metodo Aurreratuak
+tel: '\mbox{ }'
+mail: '[jon.vadillo, usue.mori, itziar.irigoien, borja.calvo]\@ehu.eus'
+address: | 
+         | Manuel de Lardizabal, 1
+         | 20018 Donostia
+header-includes: \usepackage{xcolor}
+urlcolor: blue
+output:
+  pdf_document:
+    keep_tex: false
+---
+
+
+```{r, echo=FALSE}
+set.seed(666)
+```
+
+
+  Demagun gure populazioa adierazten duela $X$ zorizko aldagaiak. Gure helburua banaketa honen parametro ezberdinen estimazioa egitea izango da eta estimatzaile horien banaketak eta propietateak ezagutzen saiatzea teknika ezberdinak erabiliz.
+
+# Estimatzailearen banaketa 
+
+Klasean azaldu moduan, estimatzaileak zorizko aldagaiak dira, lagin ezberdinen arabera balio ezberdinak (estimazioak) hartzen dituztenak. Hau hala izanik, estimatzailearen banaketa ezagutzeak bere propietateei buruzko informazioa emango digu. Estimatzailearen banaketa lortzeko bide ezberdin batzuk azter ditzagun:
+  
+## **Banaketa teorikoa**
+  
+  Demagun $X$en banaketa ezaguna dela, adibidez, $X\sim {\cal N}(5, 2^2)$. $EX=\mu$ parametroaren estimatzaile gisa $\hat{\mu}=\overline{X}=\frac{1}{n}\sum_{i=1}^n X_i$ hartzen badugu, $\hat{\mu}=\overline{X}\sim {\cal N}(5, \frac{2}{\sqrt{n}})$ dela dakigu limite zentralaren teoremagatik. $n=1000$ laginaren tamaina izanik, irudikatu dezagun estimatzailearen banaketa, laginduz eta histograma bat eginez:
+  
+  
+  
+```{r, out.width="45%", fig.align='center'}
+n <- 1000
+hist(rnorm(100000, 5, 2/sqrt(n)), main="Estimatzailearen banaketa", xlab="Estimazio-balioak")
+abline(v=5, col="red")
+```
+
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][1cm][t]{15cm}
+  \textbf{Ariketa:} Demagun $X\sim {\cal N}(5, 2^2)$ banaketa dugula, irudikatu $\hat{\mu}=\overline{X}$ estimatzailearen banaketa $n$ balio ezberdinetarako (batzuk handiak eta besteak txikiak). Zer esan dezakezu?
+    \end{minipage}}
+
+\bigskip
+
+```{r}
+par(mfrow=c(3, 3))
+for (n in c(10, 100, 1000, 10000, 100000, 1000000)){
+  hist(rnorm(100000, 5, 2/sqrt(n)), main=paste("Estimatzailearen banaketa\nn =", n), xlab="Estimazio-balioak", xlim=c(2.5, 7.5))
+  abline(v=5, col="red")
+}
+  
+```
+
+**Soluzioa:** lagin tamaina handitu ahala bariantza txikitzen da.
+
+\bigskip
+
+OHARRA: Estimatzailearen banaketa teorikoa oso kasu gutxietan ezagutuko dugu, izan ere, $X$ aldagaiaren banaketa ezaguna izatea ez da ohikoa, eta gainera, ezaguna izanda ere, estimatzaile guztientzat ez da tribiala banaketa analitikoki kalkulatzea. 
+
+
+## **Lagin banaketa**
+
+Demagun $X$ren banaketa ezaguna dela, adibidez, $X\sim {\cal N}(5, 2^2)$ eta demagun banaketaren mediana ($\theta$) estimatzeko lagin mediana erabiliko dugula: $\hat{\theta}=Median\{X_1, X_2, ..., X_n\}$. Aurreko atalean ez bezala, kasu honetan ez da erraza estimatzailearen benetako probabilitate banaketa zein den jakitea. Egoera honetan, $X$-ren banaketatik lagin ezberdin asko ateraz, $\hat{\theta}$ estimatzailearen banaketa hurbildu dezakegu. Lehenik, banaketaren laginak sortuko ditugu.
+
+```{r}
+banaketa.laginak <- function(lagin.kopurua, lagin.tamaina, mu, sigma){
+  laginak <- matrix(rnorm(lagin.kopurua*lagin.tamaina, mu, sigma), 
+                    nrow=lagin.kopurua, ncol=lagin.tamaina)
+  return(laginak)
+}
+
+laginak <- banaketa.laginak(1000, 1000, 5, 2)
+```
+
+Ondoren, lagin bakoitzeko estimazioa lortuko dugu (mediana aplikatuz) eta emaitza (estimatzailearen lagina) histograma baten bidez irudikatuko dugu.
+
+```{r, out.width="65%", fig.align='center'}
+estimazioak <- apply(laginak, 1, median)
+hist(estimazioak, main="Estimatzailearen banaketa", xlab="Estimazio-balioak")
+abline(v=5, col="red")
+```
+
+OHARRA: Egoera errealetan populazioaren banaketa ez da ezaguna izaten, beraz, banaketa hau ez dugu eskura izaten eta ezin dugu lagindu. 
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][2cm][t]{15cm}
+  \textbf{Ariketa:} Atal honetako populazio berdina hartuz, irudikatu $\hat{\theta}$ moztutako batezbestekoaren lagin-banaketa. Moztutako batezbestekoa lagineko datuen $\%50$ zentralen batezbestekoa da eta estatistiko hau egoera batzuetan mediana eta batezbestekoa baino egokiagoa da banaketaren ``zentroa'' adierazteko.
+  
+  OHARRA: Moztutako batezbestekoa inplementatzeko, aztertu \textbf{mean} funtzioaren \textbf{trim} argumentua.
+  \end{minipage}}
+
+\bigskip
+
+```{r, out.width="65%", fig.align='center'}
+estimazioak <- apply(laginak, 1, mean, trim=0.25)
+hist(estimazioak, main="Estimatzailearen banaketa", xlab="Estimazio-balioak")
+abline(v=5, col="red")
+```
+
+
+
+
+## **Bootstrap banaketa** 
+
+Suposatu dezagun $X$ren banaketa **ez** dugula ezagutzen eta dugun informazio bakarra banaketa honetatik ateratako $n=1000$ tamainako lagin bat dela (`lagina` objetuan gordeta)^[Tutorialeko ariketak egiteko, lagina artifizialki sortuko dugu `lagina <- rnorm(1000, 5, 2)` eginez]. Mediana estimatzailearen ($\hat{\theta}$) banaketa, hurbildu nahi dugu baina kasu honetan populazioaren banaketa ez dugu ezagutzen, beraz ezin ditugu bertatik laginak atera, soilik daukagu lagin bat. Beraz, estimatzailearen banaketa lortzeko bootstrap ez parametrikoa erabiliko dugu. Gure laginetik abiatuz, itzuleradun laginketa erabiliz $B=1000$ bootstrap lagin sortuko ditugu, baita ere $n=1000$ tamainakoak. Kontuan izan $n$ eta $B$k ez dutela zertan beti zenbaki berdinak izan.
+
+```{r, echo=FALSE}
+rm(laginak)
+set.seed(666)
+lagina <- rnorm(1000, 5, 2)
+```
+
+```{r}
+bootstrapLaginakLortu <- function(hasierako.lagina, boot.lagin.kopurua, boot.lagin.tamaina){
+  boot.laginak <- matrix(
+    sample(hasierako.lagina, boot.lagin.kopurua*boot.lagin.tamaina, replace=TRUE), 
+    nrow=boot.lagin.kopurua, ncol=boot.lagin.tamaina)
+  return(boot.laginak)
+}
+
+boot.laginak <- bootstrapLaginakLortu(lagina, 1000, 1000)
+```
+
+Behin aldagaiaren (bootstrap) laginketa dugula, lagin bakoitzari estimatzailea aplikatu eta emaitza histograma baten bidez irudikatuko dugu. Horrez gain bi marra bertikal marraztuko ditugu, bat benetako parametroaren balioa (gorriz) adierazteko eta bestea `lagina` laginaren bidez lortutako estimazioa (berdez) adierazteko. 
+
+```{r, out.width="45%", fig.align='center'}
+# boot.estimazioak <- apply(boot.laginak, 1, median)
+boot.estimazioak <- apply(boot.laginak, 1, mean, trim=0.25)
+hist(boot.estimazioak, main="Boostrap estimazioak", xlab="Balioak")
+estimazioa <- median(lagina)
+abline(v=5, col="red") # Hau egoera errealetan ez dugu ezagutuko!
+abline(v=estimazioa, col="green")
+```
+
+OHARRA: Azken egoera hau da errealistena, populazioaren eta estimatzailearen banaketak ez dira ezagunak.  Hala ere, bootstrap-banaketa erabili dezakegu lagin-banaketa hurbiltzeko eta gure estimatzailearen hainbat propietate ezagutzeko edo konfiantza-tarteak eraikitzeko. Ikusten denez, bootstrap metodoak ez du balio estimazioa hobetuko, izan ere, lagin-banaketa benetako parametroan dago zentratuta eta, aldiz, bootstrap-banaketa laginaren estimazioan.
+
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][1.5cm][t]{15cm}
+  \textbf{Ariketa:} Errepikatu aurreko kode blokeetan egindakoa baina kasu honetan $\hat{\theta}$ moztutako batezbestekoaren bootstrap banaketa irudikatuz. Gainera, egin proba ezberdinak hasierako laginaren tamaina eta bootstrap laginen kopurua aldatuz.
+  \end{minipage}}
+
+\bigskip
+
+
+
+
+
+
+
+# Alborapena eta errore estandarra
+
+Estimatzailearen banaketatik informazio ezberdina atera dezakegu. Tinkotasunari buruzko informazioa lortzeko adibidez alborapena eta SE hurbildu ditzakegu. \bigskip
+
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][0.5cm][t]{15cm}
+  \textbf{Ariketa:} Bete itzazu hurrengo bi funtzioetan falta diren kode-lerroak.
+  \end{minipage}}
+  
+
+Implementatuko dugun lehenengo funtzioak estimatzailearen alborapena hurbiltzen du. Alborapena $b(\hat{theta})=E(\hat{\theta})-\theta$ da. Hau hurbiltzeko bootstrap metodoa eta plug-in printzipioa aplikatuko ditugu, itxaropena bootstrap estimazioen batezbestekoarengatik ordezkatuz ($E(\hat{\theta})=\bar{\hat{\theta}^*}$) eta benetako parametroaren balioa estimazioa erabiliz ordezkatuz ($\theta \sim \hat{\theta}$). 
+
+
+```{r, eval=FALSE}
+estimatuAlborapena <- function(boot.estimazioak, estimazioa){
+  #Kalkulatu bootstrap estimazioak erabiliz alborapena (44. gardenkia)
+  etheta <- apply(boot.estimazioak, 1, mean, trim=0.25)
+  return()
+}
+``` 
+
+Orain hurbildu dezagun estimatzailearen errore estandarra:
+
+```{r}
+estimatuSE <- function(boot.estimazioak){
+  #Kalkulatu bootstrap estimazioak erabiliz SE (45. gardenkia)
+  return()
+}
+
+```
+
+
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][1.5cm][t]{15cm}
+  \textbf{Ariketa:} Aurreko ataleko `lagina` objektua erabiliz eta bootstrap laginketa ezberdinak erabiliz (lagin kopurua eta lagin tamainak aldatuz), hurbildu itzazu $\hat{\mu}=\overline{X}$ eta $\hat{\theta}=Median \{X_1,X_2,...,X_n\}$ estimatzaileen alborapena eta errore estandarra. Zer esan dezakezu?
+    \end{minipage}}
+    
+    
+    
+
+
+    
+    
+
+# Konfiantza-tarteak
+
+## Konfiantza tarte teorikoa
+
+Konfiantza tarte teorikoak estimatzailearen menpeko estatistiko jakin baten banaketa ezaguna denean erabili ditzakegu. Adibidez, hasierako populazioa normala (edo nahikoa handia) denean eta batezbestekoaren estimatzaile moduan $\hat{\mu}=\overline{X}$ hartuta, errore estandarrean oinarritutako konfiantza tarteak eraiki ditzakegu $\mu$ parametroarentzat era honetan:
+  
+  $$ \frac{\overline{X}-\mu}{\frac{S_{n-1}}{\sqrt{n}}}:t_{n-1} \Rightarrow KT=(\overline{x}-t_{\alpha/2;n-1}\frac{S_{n-1}}{\sqrt{n}}, \overline{x}+t_{\alpha/2;n-1}\frac{S_{n-1}}{\sqrt{n}})$$
+  
+  
+  \sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][1cm][t]{15cm}
+  \textbf{Ariketa:} Goiko formulan oinarrituz, bete kode-hutsuneak hurrengo funtzioan batezbestekorako ohiko t-konfiantza tarteak kalkulatzeko.
+  \end{minipage}}
+
+
+```{r, eval=FALSE}
+getCI <- function (x, alpha= 0.05)
+{
+  m <- mean(x)
+  se <- sd(x)/sqrt(length(x))
+  df <- #Bete t banaketaren askatasun graduekin
+  t <- qt(1-alpha/2, df)
+  d <- # Bete formula egokiarekin
+  ci <- c(m-d, m+d)
+  names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
+  return(ci)
+}
+```
+\bigskip
+
+
+
+
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][1cm][t]{15cm}
+  \textbf{Ariketa:} Erabili aurreko funtzioa `lagina` objetutik batezbestekorako $\%95$ko konfiantza-tartea kalkulatzeko. Kontuan izan $0.95=1-\alpha$ dela.
+  \end{minipage}}
+
+\bigskip
+
+
+
+\bigskip
+
+
+Honelako konfiantza tarteak `t.test` funtzioarekin ere kalkulatu ditzakegu honela:
+  
+```{r}
+t.test(lagina, conf.level=0.95)$conf.int
+```
+
+*OHARRA*: Ezin badugu lortu estatistikoaren benetako banaketa bootstrap konfiantza-tarteak erabili ditzakegu.
+
+## Pertzentiletan oinarritutako bootstrap konfiantza tarteak
+
+Honelako konfiantza tarteak eraikitzeko, estimatzailearen bootstrap banaketaren pertzentilak erabiliko ditugu zuzenean. Adibidez, $\%95$ konfiantza mailarako, 2.5. eta 97.5. pertzentilak erabiliko ditugu:
+  
+  $$KT=(\hat{\theta}_{0.025}, \hat{\theta}_{0.975})$$
+  
+  
+  \sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][1cm][t]{15cm}
+  \textbf{Ariketa:} Pertzentiletan oinarritutako bootstrap konfiantza tarteak $\hat{\mu}$ parametroarentzat honako kodea erabiliz eraiki ditzakegu. Bete kode-hutsuneak `quantile` funtzioa erabiliz eta erabili `lagina` objetutik batezbestekorako $\%95$ko konfiantza-tartea kalkulatzeko.
+    \end{minipage}}
+
+
+```{r, eval=FALSE}
+getCIBootQuantile <- function(x, B=1000, alpha=0.05)
+{
+    n <- length(x)
+    boot.laginak  <- #SORTU B=1000 BOOTSTRAP LAGIN
+    boot.estimazioak <- #LAGIN BAKOITZERAKO LORTU ESTIMAZIOA
+    ci <- #BETE boot.estimazioak BALIOEN BI PERTZENTIL EGOKIEKIN (bi posizioko bektore bat)
+    names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
+  return(ci)
+}
+
+getCIBootQuantile(lagina, alpha=0.05)
+```
+
+
+
+
+\bigskip
+
+\sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+\begin{minipage}[c][][t]{15cm}
+\textbf{Ariketa:} Orokortu aurreko funtzioa, $\hat{\mu}$ parametroarentzat erabili nahi den estimatzailea (adibidez, 'mean', 'median',...) funtzioari argumentu moduan zehaztuz. Erabili funtzio berria mediana erabiliz. 
+\end{minipage}}
+\rmfamily
+
+
+
+
+**OHARRA** Aurreko atalean kalkulatutako tarteak sinpleak dira, baina kasu askotan ez dituzte emaitza onak ematen. Hurrengo atalean tarte apur bat sofistikatuagoak nola eraiki ikusiko dugu.
+
+## Bootstrap t-tarteak
+
+ Azkenik, populazioaren banaketa ez bada normala edo ez badugu ezagutzen, ohiko konfiantza tartean agertzen den t-banaketa ez dugu izango, baina benetako banaketa hurbiltzen saiatu gaitezke bootstrap teknika erabiliz. Ondoren, banaketa hau erabiliz, konfiantza tartea honela eraiki dezakegu:
+  
+  $$ KT=\Big(\hat{\theta}-t^*_{1-\alpha/2;n-1} \cdot SE(\hat{\theta}), \;
+  \hat{\theta}-t^*_{\alpha/2;n-1} \cdot SE(\hat{\theta})\Big)$$
+  \sffamily\fboxrule.1em\fboxsep1em
+\fcolorbox{black}{yellow}{\color{black}
+  \begin{minipage}[c][1cm][t]{15cm}
+  \textbf{Ariketa:} $\hat{\mu}$ parametrorako bootstrap t-konfiantza tarteak honako kodea erabiliz eraiki ditzakegu. Kontuan izan, *batezbestekoa* estimatzailearen errore estandarrak (SE) formula itxia duela. Zein da? Zer egin dezakegu errore estandarra ezin badugu modu itxian kalkulatu? Bete kode-hutsuneak:
+    \end{minipage}}
+
+```{r, eval=FALSE}
+getCIBootT <- function(x, alpha=0.05, B=1000, closed=TRUE)
+{
+  estimazioa <- estim_fun(x)
+  n <- length(x)
+  boot.laginak <- #SORTU  B=1000 BOOTSTRAP LAGIN
+  boot.estimazioak <- #LAGIN BAKOITZERAKO LORTU ESTIMAZIOA
+  se <- #BETE PARAMETROAREN ERRORE ESTANDARRAREKIN
+  boot.t <- approxDistributionTBoot(estimazioa, boot.laginak, boot.estimazioak)
+  ci_inf <- estimazioa - quantile(boot.t, 1-alpha/2)*se
+  ci_sup <- # BETE KONFIANTZA TARTEAREN GOIKO MUGAREKIN
+  ci <- c(ci_inf, ci_sup)
+  names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
+  return(ci)
+}
+
+approxDistributionTBoot <-function(estimation, boot.samples, boot.estimations, closed=closed){
+  n <- ncol(boot.samples)
+  B <- nrow(boot.samples)
+  boot.se <- # DEFINITU BOOTRAP ESTIMATZAILEEN ERRORE ESTANDARRAK
+  t.balioak <- # SORTU BOOTSTRAP t BANAKETA (Ikus 50. gardenkia)
+}
+```
+
+
+
+\newpage
+
+# Ariketak
+
+**1. ariketa** Demagun honako bi laginak ditugula:
+  
+```{r}
+lagina1 <- c(11.8, 9.3, 11.4, 20.4, 15.2, 17.8, 15.2, 13.5, 15.1, 10.6, 18.4, 7.5, 17.7, 19.9,
+             12.4, 14.6, 21.2, 10.1, 10.2, 13.7, 15.8, 18.1, 16.2, 19.8, 14.2, 14.1, 11.3, 
+             11.1, 16.8, 14.8, 15.8, 14.6, 15.0, 15.7, 10.3, 8.8, 17.0, 15.7, 18.6, 12.1, 16.4,
+             19.3, 9.9, 15.9, 19.7, 17.6, 15.9, 16.2, 11.1, 15.6)
+
+
+lagina2 <- c(0.10, 0.03, 0.03, 1.11, 0.50, 0.59, 0.22, 0.26, 3.19, 0.49, 1.14, 0.36, 0.38,
+             1.10, 0.02, 0.18, 0.51, 0.41, 0.01, 0.51, 0.15, 0.36, 0.09, 1.50, 0.51, 0.57,
+             0.66, 0.16, 1.10, 0.39, 0.01, 2.52, 1.94, 0.68, 1.06, 0.01, 0.09, 0.74, 0.07, 
+             1.39, 0.66, 0.92, 0.07, 0.13, 0.42, 0.02, 0.21, 0.47, 0.78, 1.71, 0.01, 0.44,
+             0.31, 0.28, 0.26, 0.55, 1.44, 0.17, 0.20, 0.27, 0.07, 0.12, 0.33, 1.02, 1.54, 
+             0.43, 0.47, 1.99, 0.96, 0.52, 0.02, 0.65, 0.76, 0.03, 0.95, 0.36, 1.33, 0.69,
+             0.15, 0.00, 0.46, 1.05, 1.23, 0.84, 0.49, 0.04, 0.04, 0.09, 0.42, 0.14, 0.20,
+             0.01, 0.21, 1.88, 0.39, 0.16, 0.10, 0.07, 0.06, 0.17)
+```
+
++ Irudikatu laginen histogramak. Zer esan dezakegu banaketei buruz?
+
+
+  
++ Batezbestekoaren bootstrap banaketa irudikatu eta kalkulatu alborapena eta errore estandarra bi kasuetan.
+
+
+
++ Bariantzaren bootstrap banaketa irudikatu eta kalkulatu alborapena eta errore estandarra bi kasuetan.
+
+
++ Kalkulatu batezbestekorako:
+  
+  + Ohiko konfiantza tarteak, asumituz hasierako populazioak banaketa normala jarraitzen duela. 
+  + Pertzentiletan oinarritutako bootstrap konfiantza tarteak.
+  + Bootstrap t-konfiantza tarteak.
+  
+
+
+
++ (ARIKETA EXTRA) Kalkulatu bariantzarako:
+  
+  + Pertzentiletan oinarritutako bootstrap konfiantza tarteak.
+  + Bootstrap t-konfiantza tarteak (OHARRA: Kasu honetan estimatzailearen benetako SE ez da ezaguna, ikus 53. gardenkia).
+
+
+
+**2. ariketa**  ${\cal N}(20, 5^2)$ populazioan oinarrituz, aipaturiko hiru motako $\mu$rako konfiantza-tarteek (KT) adierazitako konfiantza maila betetzen duten ala ez aztertu. Horretarako oinarritu konfiantza tarteen interpretazioan:
+  
++ Sor ditzagun zoriz $n=100$ tamainako $N=10000$ lagina gure populaziotik (${\cal N}(20, 5^2)$).
+
++ Lagin bakoitzerako kalkula dezagun $\mu$rako %95eko konfiantza-tartea eta begira dezagun ia parametroaren benetako balioa tartean dagoen.
+
++ Konfiantza-tartea \%95ekoa bada, parametroa tartean egon beharko luke 0.95 probabilitatearekin. Konprobatu ea hau betetzen den.
+
+
+
+
+
+**3. ariketa** Errepikatu aurreko ariketa baina hasierako populazioa banaketa esponentzial bat dela asumituz ($X\sim Exp(\lambda=2)$). Zer ondorio atera dituzu?
+  
+
+
+
+  
+  
