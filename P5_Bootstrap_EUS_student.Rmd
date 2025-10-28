@@ -115,7 +115,7 @@ abline(v=5, col="red")
 
 ## **Bootstrap banaketa** 
 
-Suposatu dezagun $X$ren banaketa **ez** dugula ezagutzen eta dugun informazio bakarra banaketa honetatik ateratako $n=1000$ tamainako lagin bat dela (`lagina` objetuan gordeta)^[Tutorialeko ariketak egiteko, lagina artifizialki sortuko dugu `lagina <- rnorm(1000, 5, 2)` eginez]. Mediana estimatzailearen ($\hat{\theta}$) banaketa, hurbildu nahi dugu baina kasu honetan populazioaren banaketa ez dugu ezagutzen, beraz ezin ditugu bertatik laginak atera, soilik daukagu lagin bat. Beraz, estimatzailearen banaketa lortzeko bootstrap ez parametrikoa erabiliko dugu. Gure laginetik abiatuz, itzuleradun laginketa erabiliz $B=1000$ bootstrap lagin sortuko ditugu, baita ere $n=1000$ tamainakoak. Kontuan izan $n$ eta $B$k ez dutela zertan beti zenbaki berdinak izan.
+Suposatu dezagun $X$ren banaketa **ez** dugula ezagutzen eta dugun informazio bakarra banaketa honetatik ateratako $n=1000$ tamainako lagin bat dela (`lagina` objetuan gordeta)^[Tutorialeko ariketak egiteko, lagina artifizialki sortuko dugu `lagina <- rnorm(1000, 5, 2)` eginez]. Mediana estimatzailearen ($\hat{\theta}$) banaketa, hurbildu nahi dugu baina kasu honetan populazioaren banaketa ez dugu ezagutzen, beraz ezin ditugu bertatik laginak atera, soilik lagin bat daukagu. Beraz, estimatzailearen banaketa lortzeko bootstrap ez parametrikoa erabiliko dugu. Gure laginetik abiatuz, itzuleradun laginketa erabiliz $B=1000$ bootstrap lagin sortuko ditugu, baita ere $n=1000$ tamainakoak. Kontuan izan $n$ eta $B$k ez dutela zertan beti zenbaki berdinak izan.
 
 ```{r, echo=FALSE}
 rm(laginak)
@@ -179,11 +179,10 @@ Estimatzailearen banaketatik informazio ezberdina atera dezakegu. Tinkotasunari 
 Implementatuko dugun lehenengo funtzioak estimatzailearen alborapena hurbiltzen du. Alborapena $b(\hat{theta})=E(\hat{\theta})-\theta$ da. Hau hurbiltzeko bootstrap metodoa eta plug-in printzipioa aplikatuko ditugu, itxaropena bootstrap estimazioen batezbestekoarengatik ordezkatuz ($E(\hat{\theta})=\bar{\hat{\theta}^*}$) eta benetako parametroaren balioa estimazioa erabiliz ordezkatuz ($\theta \sim \hat{\theta}$). 
 
 
-```{r, eval=FALSE}
+```{r}
 estimatuAlborapena <- function(boot.estimazioak, estimazioa){
   #Kalkulatu bootstrap estimazioak erabiliz alborapena (44. gardenkia)
-  etheta <- apply(boot.estimazioak, 1, mean, trim=0.25)
-  return()
+  mean(boot.estimazioak) - estimazioa
 }
 ``` 
 
@@ -192,7 +191,7 @@ Orain hurbildu dezagun estimatzailearen errore estandarra:
 ```{r}
 estimatuSE <- function(boot.estimazioak){
   #Kalkulatu bootstrap estimazioak erabiliz SE (45. gardenkia)
-  return()
+  sd(boot.estimazioak)
 }
 
 ```
@@ -207,8 +206,40 @@ estimatuSE <- function(boot.estimazioak){
     
     
     
+```{r}
 
 
+
+for (n in c(10, 100, 1000, 10000)){
+  print(paste("n", n))
+  for (B in c(10, 100, 500, 1000, 10000)){
+    estimazioa <- mean(lagina, trim=0.25)
+    boot.laginak <- bootstrapLaginakLortu(lagina, B, n)
+    boot.estimazioak <- apply(boot.laginak, 1, mean, trim=0.25)
+    
+    alborapena <- estimatuAlborapena(boot.estimazioak, estimazioa)
+    errorea <- estimatuSE(boot.estimazioak)
+    
+    print(paste("    B", B, "Alborapena:", alborapena, "SD:", errorea))
+
+    #alborapenak <- c(alborapenak, estimatuAlborapena(boot.estimazioak, estimazioa))
+    #erroreak <- c(erroreak, estimatuSE(boot.estimazioak))
+    
+  }
+}
+
+#alborapenak <- matrix(alborapenak, nrow = 4, ncol = 5)
+#erroreak <- matrix(erroreak, nrow=4, ncol=5)
+
+# ALBORAPENAK
+# alborapenak
+
+# ERRORE ESTANDARRAK
+# erroreak
+
+```
+
+**Interpretazioa: ** Lagin tamaina (\texttt n) handitzean zehaztasuna ere handitzen da, nahiz eta hasierako laginaren tamaina gainditu. Bootstrap tamaina (\texttt B) handitzean ere berdina gertatzen da, baina tamaina batetik aurrera ez da nabaria.
     
     
 
