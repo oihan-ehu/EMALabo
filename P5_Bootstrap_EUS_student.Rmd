@@ -259,15 +259,15 @@ Konfiantza tarte teorikoak estimatzailearen menpeko estatistiko jakin baten bana
   \end{minipage}}
 
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 getCI <- function (x, alpha= 0.05)
 {
   m <- mean(x)
   se <- sd(x)/sqrt(length(x))
-  df <- #Bete t banaketaren askatasun graduekin
+  df <- length(x)-1
   t <- qt(1-alpha/2, df)
-  d <- # Bete formula egokiarekin
-  ci <- c(m-d, m+d)
+  d <- t*se
+    ci <- c(m-d, m+d)
   names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
   return(ci)
 }
@@ -275,7 +275,21 @@ getCI <- function (x, alpha= 0.05)
 \bigskip
 
 
+```{r}
 
+boot.laginak <- bootstrapLaginakLortu(lagina, 1000, 1000)
+boot.estimazioak <- apply(boot.laginak, 1, mean, trim=0.25)
+
+```
+
+```{r}
+
+getCI(lagina)
+
+```
+
+
+\bigskip
 
 
 \sffamily\fboxrule.1em\fboxsep1em
@@ -313,18 +327,22 @@ Honelako konfiantza tarteak eraikitzeko, estimatzailearen bootstrap banaketaren 
     \end{minipage}}
 
 
-```{r, eval=FALSE}
-getCIBootQuantile <- function(x, B=1000, alpha=0.05)
+```{r}
+getCIBootQuantile <- function(x, B=1000, alpha=0.05, FUN=mean, ...)
 {
     n <- length(x)
-    boot.laginak  <- #SORTU B=1000 BOOTSTRAP LAGIN
-    boot.estimazioak <- #LAGIN BAKOITZERAKO LORTU ESTIMAZIOA
-    ci <- #BETE boot.estimazioak BALIOEN BI PERTZENTIL EGOKIEKIN (bi posizioko bektore bat)
+    boot.laginak  <- bootstrapLaginakLortu(x, 1000, n)
+    boot.estimazioak <- apply(boot.laginak, 1, FUN, ...)
+    ci <- getCI(boot.estimazioak, alpha)
     names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
   return(ci)
 }
 
 getCIBootQuantile(lagina, alpha=0.05)
+
+getCIBootQuantile(lagina, alpha=0.05, FUN=mean, trim=0.25)
+
+getCIBootQuantile(lagina, alpha=0.05, FUN=median)
 ```
 
 
