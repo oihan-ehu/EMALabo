@@ -13,7 +13,7 @@ address: |
 header-includes: \usepackage{xcolor}
 urlcolor: blue
 output:
-  ifdown::ifirak2:
+  pdf_document:
     keep_tex: false
 ---
 

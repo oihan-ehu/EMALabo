@@ -266,7 +266,7 @@ Balioa oso berdintsua da.
 
 Orain, jakinda benetako populazioak $\mathcal{U}(0, 5)$ jarraitzen duela, azter dezagun zer gertatzen den momentuen ($\hat{\theta}_{MM}=2\bar{X}$) eta egiantz handieneko ($\hat{\theta}_{EHE}=max\{X_1,X_2,...,X_n\}$) estimatzaileekin lagina handitzen denean. Horretarako, sor ditzagun $n$ tamaina ezberdinetako $N=1000$ lagin eta ikus ditzagun lortutako estimazioen batezbestekoa eta bariantza nola aldatzen diren:
 
-```{r, eval=FALSEwarning=FALSE}
+```{r, eval=FALSE, warning=FALSE}
 N <- 1000
 lagin.tamainak <- c(10, 20, 30, 40, 50, 75, 100, 150, 200, 250, 300, 350)
 set.seed(323)
