@@ -1,20 +1,21 @@
 ---
-title: Estimatzaileak
-# author:  Itziar Irigoien, Borja Calvo, Usue Mori
+title: "Estimatzaileak"
 date: '\mbox{ }'
 classoptions: gipuzkoa, eu, foot
-name: Usue Mori, Jon Vadillo, Itziar Irigoien, Borja Calvo 
-course: Estatistika Metodo Aurreratuak
-tel: '\mbox{ }'
-mail: '[usue.mori, jon.vadillo, itziar.irigoien, borja.calvo]\@ehu.eus'
-address: | 
-         | Manuel de Lardizabal, 1
-         | 20018 Donostia
-header-includes: \usepackage{xcolor}
-urlcolor: blue
 output:
   pdf_document:
     keep_tex: false
+  html_document:
+    df_print: paged
+course: Estatistika Metodo Aurreratuak
+tel: \mbox{ }
+mail: '[usue.mori, jon.vadillo, itziar.irigoien, borja.calvo]\@ehu.eus'
+address: |
+  | Manuel de Lardizabal, 1
+  | 20018 Donostia
+header-includes: \usepackage{xcolor}
+urlcolor: blue
+name: Usue Mori, Jon Vadillo, Itziar Irigoien, Borja Calvo
 ---
 
 
@@ -29,6 +30,9 @@ Beharrezko paketeak:
 
 ```{r, eval=FALSE}
 install.packages("nleqslv")
+```
+
+```{r}
 library(nleqslv)
 ```
 
@@ -62,6 +66,8 @@ lagina <- c(1.12, 2.58, 2.36, 0.40, 3.29, 1.54, 0.25, 4.87, 1.00, 4.26,
 ## Momentuen metodoa
 
 Lehenengo atal honetan banaketa honen parametroa ($\theta$, autobusaren frekuentzia) momentuen metodoaren bitartez estimatzen saiatuko gara. Honetarako, banaketa uniformearen itxaropena $EX=\frac{\theta}{2}$ izanik, $EX=\bar{x}$ ekuazioa ebatzi behar dugu, edo baliokidea dena, $f(X)=EX-\bar{x}$ funtzioaren erroak bilatu. Kasu honetan, ekuazio honen soluzioa bilatzea tribiala da (eskuz egin daiteke):
+
+$$\hat\theta_{MM}=2\bar x$$
 
 ``` {r}
 #Estimatzailea edozein laginerako lortzeko funtzio orokorra
@@ -266,9 +272,9 @@ Balioa oso berdintsua da.
 
 Orain, jakinda benetako populazioak $\mathcal{U}(0, 5)$ jarraitzen duela, azter dezagun zer gertatzen den momentuen ($\hat{\theta}_{MM}=2\bar{X}$) eta egiantz handieneko ($\hat{\theta}_{EHE}=max\{X_1,X_2,...,X_n\}$) estimatzaileekin lagina handitzen denean. Horretarako, sor ditzagun $n$ tamaina ezberdinetako $N=1000$ lagin eta ikus ditzagun lortutako estimazioen batezbestekoa eta bariantza nola aldatzen diren:
 
-```{r, eval=FALSE, warning=FALSE}
+```{r, eval=TRUE, warning=FALSE}
 N <- 1000
-lagin.tamainak <- c(10, 20, 30, 40, 50, 75, 100, 150, 200, 250, 300, 350)
+lagin.tamainak <- c(10, 20, 30) #, 40, 50, 75, 100, 150, 200, 250, 300, 350)
 set.seed(323)
 #Hemen gordeko ditugu estimazioen batezbesteko eta bariantzak
 est <- c()
@@ -278,7 +284,7 @@ for(n in lagin.tamainak){
   #Kalkulatu estimazioak lagin guztientzat
   aux<- t(apply(laginak, 1, 
                 function(x){c(getThetaMM(x), 
-                              getThetaML(x)$estimate)}))
+                              getThetaML(x, initial.theta = 5)$estimate)}))
   #Kalkulatu estimazio guztien batezbestekoak eta bariantzak
   bb <- colMeans(aux)
   vars <- apply(aux, 2, var)
@@ -289,7 +295,7 @@ for(n in lagin.tamainak){
 Erreparatu `est` matrizean batezbestekoak (lehen bi zutabetan) eta bariantzak (3. eta 4. zubatetan) jaso ditugula. Lagin tamainaren araberako eboluzioa ikusteko grafikoki irudikatuko ditugu. 
 
 ```{r, eval=FALSE}
-#colnames(est) <- c("bb_MM", "bb_EHE", "var_MM", "var_EHE")
+colnames(est) <- c("bb_MM", "bb_EHE", "var_MM", "var_EHE")
 
 #Irudikatu batezbestekoak eta bariantzak
 par(mfrow=c(1,2))
@@ -315,10 +321,6 @@ Ikusten dugun moduan bi estimatzaileak asintotikoki alboragabeak direla dirudi g
   \end{minipage}}
 
 \bigskip
-
-
-
-
 
 
 
@@ -363,28 +365,376 @@ $$f(x) = \frac{1}{\Gamma(k)\theta^k}x^{k-1}e^{-\frac{x}{\theta}}I_{\{x \ge 0\}}(
 
     + Lortu momentuen metodoen bidezko estimazioa dagokion ekuazio sistema ebatziz. Horretarako, erabili `nleqslv` funtzioa, zenbakizko metodoen bitartez soluzioa hurbilduko duena.
     
+$$
+VAR[X] = E[X^2] - [EX]^2 \implies E[X^2] = VAR[X]+[EX]^2
+$$
+    
+$$
+\left\{
+\begin{array}{lcl}
+\hat k\hat\theta & = & \bar x\\
+\hat k\hat\theta^2 + (\hat k \hat\theta)^2 & = & \frac{1}{n}\sum_{i=1}^n x^2_i
+\end{array}
+\right.
+$$
+
+$$
+\left\{
+\begin{array}{lcl}
+\hat k\hat\theta - \bar x& = & 0\\
+(1 + \hat k)\hat k\hat\theta^2 - \frac{1}{n}\sum_{i=1}^n x^2_i & = & 0
+\end{array}
+\right.
+$$
+
+Sistema definitu
+
+```{r}
+# x[1]: theta; x[2]: k
+mom <- function(x){
+  theta <- x[1]
+  k <- x[2]
+  
+  y <- numeric(2)
+  y[1] <- k * theta - mean(lagina)
+  y[2] <- k * (1 + k) * theta^2 - mean(lagina^2)
+  
+  y
+}
+```
 
 
 
+Jakobiarrarekin:
+```{r}
+mom_jac <- function(x) {
+  theta <- x[1]
+  k <- x[2]
+  
+  y <- numeric(2)
+  y[1] <- k * theta - mean(lagina)
+  y[2] <- k * (1 + k) * theta^2 - mean(lagina^2)
+  
+  # Jacobian matrix
+  J <- matrix(0, nrow = 2, ncol = 2)
+  J[1, 1] <- k          # ay1/at
+  J[1, 2] <- theta      # ay1/ak
+  J[2, 1] <- 2 * k * (1 + k) * theta  # ay2/at
+  J[2, 2] <- (1 + 2 * k) * theta^2    # ay2/ak
+  
+  attr(y, "jacobian") <- J
+  y
+}
+```
 
-    + Kalkulatu eskuz momentuen metodoaren bidezko estimatzaileak eta konparatu aurreko atalean lortutako estimazioa eskuz lortutako balioekin. Hurbilketa ona lortu al dugu?
+
+Sistema ebatzi
+
+```{r}
+xstart <- c(5, 5)
+
+sol <- nleqslv(xstart, mom, method = "Broyden",
+               control = list(ftol = 1e-10, maxit = 200))
+
+
+thetaHat <- sol$x[1]
+kHat <- sol$x[2]
+thetaHat
+kHat
+
+```
+
+Jakobiarrarekin
+
+```{r}
+xstart <- c(5, 5)
+
+sol <- nleqslv(xstart, mom_jac, 
+               control = list(ftol = 1e-10, xtol = 1e-10, maxit = 200,
+                              trace = 0))  # trace=1 shows iterations
+
+
+thetaHat <- sol$x[1]
+kHat <- sol$x[2]
+thetaHat
+kHat
+
+```
+
+
+
++ Kalkulatu eskuz momentuen metodoaren bidezko estimatzaileak eta konparatu aurreko atalean lortutako estimazioa eskuz lortutako balioekin. Hurbilketa ona lortu al dugu?
+    
+    
+$$E(X)=k\theta ; \quad VAR(X)=k\theta^2$$
+    
+$$
+\left\{
+\begin{array}{lcl}
+\hat k\hat\theta & = & \bar x\\
+\hat k\hat\theta^2 + (\hat k \hat\theta)^2 & = & \frac{1}{n}\sum_{i=1}^n x^2_i
+\end{array}
+\right.
+$$
+
+$\hat k = \frac{\bar x}{\hat\theta}$ ordezkapena eginez:
+
+$$
+\hat\theta \bar x + \bar x^2 = \frac{1}{n}\sum_{i=1}^n x^2_i
+$$
+$$
+\hat\theta \bar x = \frac{1}{n}\sum_{i=1}^n x^2_i - \bar x^2
+$$
+$\hat\theta = \frac{\widehat{Var}(x)}{\bar x}$ non $\widehat{Var}(x) = \frac{1}{n}\sum_{i=1}^n x^2_i - \bar x^2$
+
+$$\hat k = \frac{\bar x}{\hat\theta} = \frac{\bar x^2}{\widehat{Var}(x)}$$
+
+
+```{r}
+theta_MM <- function(x) {
+  n <- length(x)
+  (mean(x^2) - mean(x)^2) / mean(x)
+}
+
+k_MM <- function(x) {
+  mean(x)^2 / (mean((x - mean(x))^2))
+}
+
+theta_MM(lagina)
+k_MM(lagina)
+
+```
 
     
 2. Egiantz handieneko estimazioa:
 
-    + Irakurri lagina eta eraiki dagokion egiantz-funtzioaren logaritmoa ($L$) kalkulatzen duen funtzioa. 
-    + Marraztu $L$ $k$ balioekiko $[3, 10]$ eremuan. $\theta$ren zein balio finkatu duzu?
-    + Marraztu $L$ $\theta$ balioekiko $[3, 10]$ eremuan. $k$ren zein balio finkatu duzu?
-    + Marraztu $L$-ren maila-kurbak $[1, 10] \times [1, 10]$ eremuan. 
-    + Erabili *nlm* funtzioa egiantz handieneko estimazioak topatzeko. Erabili hasiera puntu bezala $k=1, \theta =3$. (Gogoratu *nlm* minimoa bilatzen saiatuko dela).
+    + Irakurri lagina eta eraiki dagokion egiantz-funtzioaren logaritmoa ($L$) kalkulatzen duen funtzioa.
     
-  
+```{r}
+getLikelihood <- function(k, theta, sample){
+  l <- 0
+  if(all(sample>=0)){
+    return(prod(dgamma(sample, k, scale = theta)))
+  }
+  return(l)
+}
+```
+
+Eta, ondoren, logaritmoa kalkulatu:
+
+```{r}
+getLogLikelihood  <- function(k, theta, sample){
+  l <- getLikelihood(k, theta, sample)
+  if(l!=0){
+    return(log(l))}
+  else{
+    # -Inf balioa ekiditeko
+    return(-Inf)
+  }
+}
+```
+    
+Edo logaritmoen baturarekin
+
+```{r}
+getLogLikelihood <- function(k, theta, sample){
+  probs <- dgamma(sample, k, scale=theta)
+  ll <- sum(log(probs))
+  return (ll)
+}
+```
+
+
+    
++ Marraztu $L$ $k$ balioekiko $[3, 10]$ eremuan. $\theta$ren zein balio finkatu duzu?
+    
+```{r, fig.asp=0.5}
+shapes <- seq(3, 10, 0.1)
+logl <- sapply(shapes, FUN=getLogLikelihood,
+               sample=lagina, theta=6)
+plot(shapes, logl, type="l")
+```
+
+Momentuen metodoan lortutako estimazioa finkatu dut theta baliorako
+
+
++ Marraztu $L$ $\theta$ balioekiko $[3, 10]$ eremuan. $k$ren zein balio finkatu duzu?
+    
+```{r, fig.asp=0.5}
+
+thetak <- seq(3, 10, 0.1)
+logl <- sapply(thetak, FUN=getLogLikelihood,
+               sample=lagina, k=8)
+plot(thetak, logl, type="l")
+
+```
+
+Momentuen metodoan lortutako estimazioa finkatu dut k baliorako
+
++ Marraztu $L$-ren maila-kurbak $[1, 10] \times [1, 10]$ eremuan. 
+    
+```{r}
+
+k_vals <- seq(1, 10, 0.1)
+theta_vals <- seq(1, 10, 0.1)
+
+# Balioak gordeko dituen matrizea sortu
+ll_matrix <- matrix(0, nrow = length(k_vals), ncol = length(theta_vals))
+
+# puntu bakoitzerako balioa kalkulatu
+for (i in 1:length(k_vals)) {
+  for (j in 1:length(theta_vals)) {
+    ll_matrix[i, j] <- getLogLikelihood(k_vals[i],
+                                        theta_vals[j],
+                                        lagina)
+  }
+}
+
+# Maila kurbak irudikatu
+image(k_vals, theta_vals, ll_matrix)
+contour(k_vals, theta_vals, ll_matrix, 
+        xlab = "k (shape)", 
+        ylab = "theta (scale)",
+        main = "L-ren maila-kurbak",
+        add = TRUE,
+        levels = seq(min(ll_matrix), max(ll_matrix), length.out = 17)) # Maximoa agertzeko
+```
+
+    
++ Erabili *nlm* funtzioa egiantz handieneko estimazioak topatzeko. Erabili hasiera puntu bezala $k=1, \theta =3$. (Gogoratu *nlm* minimoa bilatzen saiatuko dela).
+    
+  nlm-k minimoa kalkulatzen du, beraz, funtzioaren negatiboa pasa behar diogu
+
+```{r}
+minusL <- function(x, sample){
+  k <- x[1]
+  theta <- x[2]
+  ll <- getLogLikelihood(k, theta, sample)
+  if (is.infinite(ll)) {
+    ll <- -1000
+  }
+return(-ll)
+}
+```
+
+```{r}
+#Estimatzailea edozein laginerako lortzeko funtzioa
+getThetaML <- function(sample, initial.theta=c(6, 6)){
+  return(nlm(f=minusL, p=initial.theta, sample=sample))
+}
+emaitza <- getThetaML(lagina)$estimate
+names(emaitza) <- c('kHat', 'thetaHat')
+emaitza
+```
   
     
 3. Propietateak: Sortu Gamma(5, 8) banaketatik $n \in \{10, 20, 30, 40, 50, 75, 100, 150, 200, 250, 300, 350\}$ tamainuko laginak $N=500$ aldiz. 
 
     + Lortu EHEk ematen dizkizun estimazioak lagin bakoitzerako eta aztertu batezbesteko eta bariantzak $n$-ren arabera. Estimatzailea tinkoa al da? (Hasi ${\hat{k}}=\hat{\theta}=3$ balioetatik eta zehaztu *stepmax*=2 `nlm` funtzioan)
-    + Egin ariketa berdina momentuen metodoak ematen dizkizun estimazioak erabiliz. Estimatzailea tinkoa al da?
     
 
     
++ Egin ariketa berdina momentuen metodoak ematen dizkizun estimazioak erabiliz. Estimatzailea tinkoa al da?
+    
+Lagina egin
+
+```{r, eval=TRUE, warning=FALSE}
+N <- 1000
+lagin.tamainak <- c(10, 20, 30, 40, 50, 75, 100, 150, 200, 250, 300, 350)
+set.seed(323)
+#Hemen gordeko ditugu estimazioen batezbesteko eta bariantzak
+est <- c()
+for(n in lagin.tamainak){
+  #Sortu laginak
+  laginak <- matrix(rgamma(n*N, 5, scale=8), nrow=N, ncol=n)
+  #Kalkulatu estimazioak lagin guztientzat
+  aux<- t(apply(laginak, 1, 
+                function(x){c(theta_MM(x), k_MM(x),
+                              rev(getThetaML(x, initial.theta = c(3, 3))$estimate))}))
+  #Kalkulatu estimazio guztien batezbestekoak eta bariantzak
+  bb <- colMeans(aux)
+  vars <- apply(aux, 2, var)
+  est <- rbind(est, c(bb,vars))
+}
+
+colnames(est) <- c("tMMest", "kMMest", "tMLest", "kMLest",
+                   "tMMvar", "kMMvar", "tMLvar", "kMLvar")
+```
+
+Lagina irudikatu
+
+```{r}
+# Estimazioak
+plot(lagin.tamainak, est[,"tMMest"], col="black", type="l",
+     ylim=c(4, 9), main="Estimazioak")
+lines(lagin.tamainak, est[,"kMMest"], col="blue")
+lines(lagin.tamainak, est[,"tMLest"], col="orange")
+lines(lagin.tamainak, est[,"kMLest"], col="darkgreen")
+abline(h=8, col="gray", lty=2)
+abline(h=5, col="gray", lty=2)
+legend(250, 7.8, legend=c("tMM", "kMM", "tML", "kML"),
+       fill=c("black", "blue", "orange", "darkgreen"))
+
+# Bariantzak
+plot(lagin.tamainak, est[, "tMMvar"], col="black", type="l",
+     ylim=c(0, 21), main="Bariantzak")
+lines(lagin.tamainak, est[,"kMMvar"], col="blue")
+lines(lagin.tamainak, est[,"tMLvar"], col="orange")
+lines(lagin.tamainak, est[,"kMLvar"], col="darkgreen")
+abline(h=8, col="gray", lty=2)
+abline(h=5, col="gray", lty=2)
+legend(250, 21, legend=c("tMM", "kMM", "tML", "kML"),
+       fill=c("black", "blue", "orange", "darkgreen"))
+```
+
+Lagina handiegia bada nlm funtzioari pasatzen diogun hasierako puntuaren malda 0 da norabide guztietan eta ondorioz ez du aurkitzen funtzioaren minimoa. Hasierako puntu hobea aukeratzerakoan ($\hat k = \hat\theta = 6$ adibidez) minimoa aurkitzen du.
+
+
+```{r, eval=TRUE, warning=FALSE}
+N <- 1000
+lagin.tamainak <- c(10, 20, 30, 40, 50, 75, 100, 150, 200, 250, 300, 350)
+set.seed(323)
+#Hemen gordeko ditugu estimazioen batezbesteko eta bariantzak
+est <- c()
+for(n in lagin.tamainak){
+  #Sortu laginak
+  laginak <- matrix(rgamma(n*N, 5, scale=8), nrow=N, ncol=n)
+  #Kalkulatu estimazioak lagin guztientzat
+  aux<- t(apply(laginak, 1, 
+                function(x){c(theta_MM(x), k_MM(x),
+                              rev(getThetaML(x, initial.theta = c(6, 6))$estimate))}))
+  #Kalkulatu estimazio guztien batezbestekoak eta bariantzak
+  bb <- colMeans(aux)
+  vars <- apply(aux, 2, var)
+  est <- rbind(est, c(bb,vars))
+}
+
+colnames(est) <- c("tMMest", "kMMest", "tMLest", "kMLest",
+                   "tMMvar", "kMMvar", "tMLvar", "kMLvar")
+```
+
+Lagina irudikatu
+
+```{r}
+# Estimazioak
+plot(lagin.tamainak, est[,"tMMest"], col="black", type="l",
+     ylim=c(4, 9), main="Estimazioak")
+lines(lagin.tamainak, est[,"kMMest"], col="blue")
+lines(lagin.tamainak, est[,"tMLest"], col="orange")
+lines(lagin.tamainak, est[,"kMLest"], col="darkgreen")
+abline(h=8, col="gray", lty=2)
+abline(h=5, col="gray", lty=2)
+legend(250, 7.8, legend=c("tMM", "kMM", "tML", "kML"),
+       fill=c("black", "blue", "orange", "darkgreen"))
+
+# Bariantzak
+plot(lagin.tamainak, est[, "tMMvar"], col="black", type="l",
+     ylim=c(0, 21), main="Bariantzak")
+lines(lagin.tamainak, est[,"kMMvar"], col="blue")
+lines(lagin.tamainak, est[,"tMLvar"], col="orange")
+lines(lagin.tamainak, est[,"kMLvar"], col="darkgreen")
+abline(h=8, col="gray", lty=2)
+abline(h=5, col="gray", lty=2)
+legend(250, 21, legend=c("tMM", "kMM", "tML", "kML"),
+       fill=c("black", "blue", "orange", "darkgreen"))
+```
