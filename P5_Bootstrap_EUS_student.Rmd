@@ -54,8 +54,9 @@ abline(v=5, col="red")
 
 ```{r}
 par(mfrow=c(3, 3))
-for (n in c(10, 100, 1000, 10000, 100000, 1000000)){
-  hist(rnorm(100000, 5, 2/sqrt(n)), main=paste("Estimatzailearen banaketa\nn =", n), xlab="Estimazio-balioak", xlim=c(2.5, 7.5))
+for (n in c(10, 100, 1000, 10000, 100000, 500000)){
+  hist(rnorm(100000, 5, 2/sqrt(n)), main=paste("Estimatzailearen banaketa\nn =", n),
+      xlab="Estimazio-balioak", xlim=c(2.5, 7.5))
   abline(v=5, col="red")
 }
   
@@ -176,8 +177,9 @@ Estimatzailearen banaketatik informazio ezberdina atera dezakegu. Tinkotasunari 
   \end{minipage}}
   
 
-Implementatuko dugun lehenengo funtzioak estimatzailearen alborapena hurbiltzen du. Alborapena $b(\hat{theta})=E(\hat{\theta})-\theta$ da. Hau hurbiltzeko bootstrap metodoa eta plug-in printzipioa aplikatuko ditugu, itxaropena bootstrap estimazioen batezbestekoarengatik ordezkatuz ($E(\hat{\theta})=\bar{\hat{\theta}^*}$) eta benetako parametroaren balioa estimazioa erabiliz ordezkatuz ($\theta \sim \hat{\theta}$). 
+Implementatuko dugun lehenengo funtzioak estimatzailearen alborapena hurbiltzen du. Alborapena $b(\hat{\theta})=E(\hat{\theta})-\theta$ da. Hau hurbiltzeko bootstrap metodoa eta plug-in printzipioa aplikatuko ditugu, itxaropena bootstrap estimazioen batezbestekoarengatik ordezkatuz ($E(\hat{\theta})=\bar{\hat{\theta}^*}$) eta benetako parametroaren balioa estimazioa erabiliz ordezkatuz ($\theta \sim \hat{\theta}$). 
 
+$$b(\hat\theta) \simeq b^*(\hat\theta)=\bar{\hat\theta^*} - \bar\theta_\mathbf{x}$$
 
 ```{r}
 estimatuAlborapena <- function(boot.estimazioak, estimazioa){
@@ -187,6 +189,8 @@ estimatuAlborapena <- function(boot.estimazioak, estimazioa){
 ``` 
 
 Orain hurbildu dezagun estimatzailearen errore estandarra:
+
+$$SE^*(\hat\theta)=\sqrt{\frac{1}{B-1}\sum_{i=1}^B(\hat\theta_i^* -\bar{\hat\theta^*})^2}$$
 
 ```{r}
 estimatuSE <- function(boot.estimazioak){
@@ -251,7 +255,7 @@ Konfiantza tarte teorikoak estimatzailearen menpeko estatistiko jakin baten bana
   
   $$ \frac{\overline{X}-\mu}{\frac{S_{n-1}}{\sqrt{n}}}:t_{n-1} \Rightarrow KT=(\overline{x}-t_{\alpha/2;n-1}\frac{S_{n-1}}{\sqrt{n}}, \overline{x}+t_{\alpha/2;n-1}\frac{S_{n-1}}{\sqrt{n}})$$
   
-  
+
   \sffamily\fboxrule.1em\fboxsep1em
 \fcolorbox{black}{yellow}{\color{black}
   \begin{minipage}[c][1cm][t]{15cm}
@@ -260,20 +264,21 @@ Konfiantza tarte teorikoak estimatzailearen menpeko estatistiko jakin baten bana
 
 
 ```{r, eval=TRUE}
-getCI <- function (x, alpha= 0.05)
+getCI <- function (x, alpha = 0.05)
 {
-  m <- mean(x)
-  se <- sd(x)/sqrt(length(x))
-  df <- length(x)-1
-  t <- qt(1-alpha/2, df)
-  d <- t*se
-    ci <- c(m-d, m+d)
-  names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
+  m <- mean(x)  # mean
+  se <- sd(x) / sqrt(length(x))  # Standard error
+  df <- length(x) - 1  # Degrees of freedom
+  t <- qt(1 - alpha/2, df)  # t-critical value
+  
+  d <- t * se
+  ci <- c(m - d, m + d)
+  names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep = "")
   return(ci)
 }
-```
-\bigskip
 
+```
+ \bigskip
 
 ```{r}
 
@@ -331,9 +336,9 @@ Honelako konfiantza tarteak eraikitzeko, estimatzailearen bootstrap banaketaren 
 getCIBootQuantile <- function(x, B=1000, alpha=0.05, FUN=mean, ...)
 {
     n <- length(x)
-    boot.laginak  <- bootstrapLaginakLortu(x, 1000, n)
+    boot.laginak  <- bootstrapLaginakLortu(x, B, n)
     boot.estimazioak <- apply(boot.laginak, 1, FUN, ...)
-    ci <- getCI(boot.estimazioak, alpha)
+    ci <- quantile(boot.estimazioak, c((alpha/2), (1-alpha/2)))
     names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
   return(ci)
 }
@@ -374,31 +379,80 @@ getCIBootQuantile(lagina, alpha=0.05, FUN=median)
   \textbf{Ariketa:} $\hat{\mu}$ parametrorako bootstrap t-konfiantza tarteak honako kodea erabiliz eraiki ditzakegu. Kontuan izan, *batezbestekoa* estimatzailearen errore estandarrak (SE) formula itxia duela. Zein da? Zer egin dezakegu errore estandarra ezin badugu modu itxian kalkulatu? Bete kode-hutsuneak:
     \end{minipage}}
 
-```{r, eval=FALSE}
-getCIBootT <- function(x, alpha=0.05, B=1000, closed=TRUE)
+  
+$$t=\frac{\hat\theta-\theta}{SE(\hat\theta)}\xrightarrow{Bootstrap}t^*=\frac{\hat\theta^*-\hat\theta}{SE(\hat\theta^*)}$$
+
+
+```{r, eval=TRUE}
+getCIBootTmean <- function(x, alpha=0.05, B=1000, closed=TRUE)
 {
-  estimazioa <- estim_fun(x)
+  estimazioa <- mean(x)
   n <- length(x)
-  boot.laginak <- #SORTU  B=1000 BOOTSTRAP LAGIN
-  boot.estimazioak <- #LAGIN BAKOITZERAKO LORTU ESTIMAZIOA
-  se <- #BETE PARAMETROAREN ERRORE ESTANDARRAREKIN
-  boot.t <- approxDistributionTBoot(estimazioa, boot.laginak, boot.estimazioak)
+  boot.laginak  <- bootstrapLaginakLortu(x, B, n)
+  boot.estimazioak <- apply(boot.laginak, 1, mean)
+  se <- sd(x)/length(x)
+  boot.t <- approxDistributionTBootmean(estimazioa, boot.laginak, boot.estimazioak)
   ci_inf <- estimazioa - quantile(boot.t, 1-alpha/2)*se
-  ci_sup <- # BETE KONFIANTZA TARTEAREN GOIKO MUGAREKIN
+  ci_sup <- estimazioa - quantile(boot.t, alpha/2)*se
   ci <- c(ci_inf, ci_sup)
   names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
   return(ci)
 }
 
-approxDistributionTBoot <-function(estimation, boot.samples, boot.estimations, closed=closed){
+approxDistributionTBootmean <-function(estimation, boot.samples, boot.estimations){
   n <- ncol(boot.samples)
   B <- nrow(boot.samples)
-  boot.se <- # DEFINITU BOOTRAP ESTIMATZAILEEN ERRORE ESTANDARRAK
-  t.balioak <- # SORTU BOOTSTRAP t BANAKETA (Ikus 50. gardenkia)
+  boot.se <- apply(boot.samples, 1, sd)/sqrt(n)
+  t.balioak <- (boot.estimations - estimation)/boot.se
 }
+
+getCIBootTmean(lagina)
 ```
 
+*Errore estandarrerako formula itxia ez dugunean* bootstrap lagin bakoitzerako bootstrap lagin gehiago atera behar ditugu:
 
+```{r, eval=TRUE}
+getCIBootT <- function(x, alpha=0.05, B=1000, B2=100, estim_fun=mean, ...)
+{
+  estimazioa <- estim_fun(x, ...)
+  n <- length(x)
+  boot.laginak  <- bootstrapLaginakLortu(x, B, n)
+  boot.estimazioak <- apply(boot.laginak, 1, estim_fun, ...)
+  se <- sd(boot.estimazioak)
+  boot.t <- approxDistributionTBoot(estimazioa, boot.laginak, boot.estimazioak, B2, estim_fun, ...)
+  ci_inf <- estimazioa - quantile(boot.t, 1-alpha/2)*se
+  ci_sup <- estimazioa - quantile(boot.t, alpha/2)*se
+  ci <- c(ci_inf, ci_sup)
+  names(ci) <- paste("%", c((alpha/2)*100, (1-alpha/2)*100), sep="")
+  return(ci)
+}
+
+approxDistributionTBoot <-function(estimation, boot.samples, boot.estimations, B2=100, estim_fun=mean, ...){
+  n <- ncol(boot.samples)
+  B <- nrow(boot.samples)
+  
+  t.values <- numeric(B)
+  
+  for (i in 1:B){
+    # Bootstrap lagin bakoitzeko azpi-bootstrap bat egin
+    sample_i <- boot.samples[i,]
+    
+    # Bigarren mailako bootsrap sortu
+    boot2.laginak <- bootstrapLaginakLortu(sample_i, B2, n)
+    boot2.estimazioak <- apply(boot2.laginak, 1, estim_fun, ...)
+    
+    # Errore estandarraren urbilpena
+    boot.se <- sd(boot2.estimazioak)
+    
+    # t.balioetara gehitu
+    t.values[i] <- (boot.estimations[i] - estimation)/boot.se
+  }
+  
+  return(t.values)
+}
+
+getCIBootT(lagina)
+```
 
 \newpage
 
@@ -425,29 +479,107 @@ lagina2 <- c(0.10, 0.03, 0.03, 1.11, 0.50, 0.59, 0.22, 0.26, 3.19, 0.49, 1.14, 0
 
 + Irudikatu laginen histogramak. Zer esan dezakegu banaketei buruz?
 
+```{r}
+hist(lagina1)
+
+hist(lagina2)
+```
+
+*Erantzuna:* 1. lagina banaketa normalaren itxura dauka eta 2. lagina banaketa exponentzialarena
 
   
 + Batezbestekoaren bootstrap banaketa irudikatu eta kalkulatu alborapena eta errore estandarra bi kasuetan.
 
+```{r}
+boot.laginak1 <- bootstrapLaginakLortu(lagina1, 1000, length(lagina1))
+boot.estimazioak1 <- apply(boot.laginak1, 1, mean)
+hist(boot.estimazioak1)
+se1 <- estimatuSE(boot.estimazioak1)
+se1
+alb1 <- estimatuAlborapena(boot.estimazioak1, mean(lagina1))
+alb1
+
+boot.laginak2 <- bootstrapLaginakLortu(lagina2, 1000, length(lagina2))
+boot.estimazioak2 <- apply(boot.laginak2, 1, mean)
+hist(boot.estimazioak2)
+se2 <- estimatuSE(boot.estimazioak2)
+se2
+alb2 <- estimatuAlborapena(boot.estimazioak2, mean(lagina2))
+alb2
+```
 
 
 + Bariantzaren bootstrap banaketa irudikatu eta kalkulatu alborapena eta errore estandarra bi kasuetan.
+
+```{r}
+boot.laginak1 <- bootstrapLaginakLortu(lagina1, 1000, length(lagina1))
+boot.estimazioak1 <- apply(boot.laginak1, 1, var)
+hist(boot.estimazioak1)
+se1 <- estimatuSE(boot.estimazioak1)
+se1
+alb1 <- estimatuAlborapena(boot.estimazioak1, mean(lagina1))
+alb1
+
+boot.laginak2 <- bootstrapLaginakLortu(lagina2, 1000, length(lagina2))
+boot.estimazioak2 <- apply(boot.laginak2, 1, var)
+hist(boot.estimazioak2)
+se2 <- estimatuSE(boot.estimazioak2)
+se2
+alb2 <- estimatuAlborapena(boot.estimazioak2, mean(lagina2))
+alb2
+```
 
 
 + Kalkulatu batezbestekorako:
   
   + Ohiko konfiantza tarteak, asumituz hasierako populazioak banaketa normala jarraitzen duela. 
+  
+  $$ \frac{\overline{X}-\mu}{\frac{S_{n-1}}{\sqrt{n}}}:t_{n-1} \Rightarrow KT=(\overline{x}-t_{\alpha/2;n-1}\frac{S_{n-1}}{\sqrt{n}}, \overline{x}+t_{\alpha/2;n-1}\frac{S_{n-1}}{\sqrt{n}})$$
+  
+```{r}
+getCI(lagina1)
+
+getCI(lagina2)
+```
+  
   + Pertzentiletan oinarritutako bootstrap konfiantza tarteak.
+  
+```{r}
+getCIBootQuantile(lagina1, FUN = mean)
+
+getCIBootQuantile(lagina2, FUN = mean)
+```
+  
+  
   + Bootstrap t-konfiantza tarteak.
   
+*batazbestekoaren SE-rako formula itxia dago*
+  
+```{r}
+getCIBootTmean(lagina1)
+
+getCIBootTmean(lagina2)
+```
 
 
 
 + (ARIKETA EXTRA) Kalkulatu bariantzarako:
   
   + Pertzentiletan oinarritutako bootstrap konfiantza tarteak.
+  
+```{r}
+getCIBootQuantile(lagina1, FUN=var)
+
+getCIBootQuantile(lagina2, FUN=var)
+```
+  
   + Bootstrap t-konfiantza tarteak (OHARRA: Kasu honetan estimatzailearen benetako SE ez da ezaguna, ikus 53. gardenkia).
 
+```{r}
+getCIBootT(lagina1, estim_fun = var)
+
+getCIBootT(lagina2, estim_fun = var)
+```
 
 
 **2. ariketa**  ${\cal N}(20, 5^2)$ populazioan oinarrituz, aipaturiko hiru motako $\mu$rako konfiantza-tarteek (KT) adierazitako konfiantza maila betetzen duten ala ez aztertu. Horretarako oinarritu konfiantza tarteen interpretazioan:
@@ -459,7 +591,27 @@ lagina2 <- c(0.10, 0.03, 0.03, 1.11, 0.50, 0.59, 0.22, 0.26, 3.19, 0.49, 1.14, 0
 + Konfiantza-tartea \%95ekoa bada, parametroa tartean egon beharko luke 0.95 probabilitatearekin. Konprobatu ea hau betetzen den.
 
 
+```{r, eval=FALSE}
+n = 100
+N = 1000
+laginak <- matrix(rnorm(n*N, 20, 5), ncol = n, nrow = N)
 
+testCI <- function(lagina, FUN1=getCI, ...){
+    apply(laginak, 1, function(x){
+    ci <- FUN1(x, ...)
+    return (20>ci[1]&&20<ci[2])
+  })
+}
+
+barruanCI <- testCI(laginak, FUN1=getCI)
+
+barruanCIQuantile <- testCI(laginak, FUN1=getCIBootQuantile)
+#barruanCIT <- testCI(laginak, FUN1 = getCIBootT)
+
+sum(barruanCI)/N
+sum(barruanCIQuantile)/N
+#sum(barruanCIT)/N
+```
 
 
 **3. ariketa** Errepikatu aurreko ariketa baina hasierako populazioa banaketa esponentzial bat dela asumituz ($X\sim Exp(\lambda=2)$). Zer ondorio atera dituzu?
