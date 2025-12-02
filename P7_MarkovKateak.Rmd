@@ -297,14 +297,12 @@ $$ \bigskip
   \end{minipage}}
   
 ```{r}
-x1.teoriko <- c(1, 0, 0, 0) %*% trantsizio.matrizea %*% matrix(c(1, 1, 1, 0, 0, 0, 0, 0, 0), nrow=3, ncol=3)
-names(x1.teoriko) <- egoerak
-x2.teoriko <- x1.teoriko %*% trantsizio.matrizea
-x3.teoriko <- x2.teoriko %*% trantsizio.matrizea
+tam <- 50
+p.teoriko = matrix(c(1, 0, 0, 0), nrow=tam, ncol=4, byrow=TRUE)
+colnames(p.teoriko) <- egoerak
 
-p.teoriko <- cbind(x1.teoriko, x2.teoriko, x3.teoriko, deparse.level = 0)
-for (i in 4:100)
-  p.teoriko <- cbind(p.teoriko, p.teoriko %*% )
+for (i in 2:tam)
+  p.teoriko[i,] <- p.teoriko[i-1,]%*%trantsizio.matrizea
 ```
   
   
