@@ -268,6 +268,23 @@ Ikus dezakegunez, MCMC bidez lortutako hurbilketa (gorriz) soluzio analitikoaren
 
 \bigskip
 
+*Analitikoki*
+
+$$
+EX = \frac{\alpha}{\alpha+\beta}
+$$
+
+```{r}
+EX.analitiko <- alfa.aposteriori/(alfa.aposteriori + beta.aposteriori)
+EX.analitiko
+```
+
+*MCMC*
+
+```{r}
+EX.mcmc <- mean(aposteriori.lagina[5000:50000])
+EX.mcmc
+```
 
 
 \bigskip
@@ -280,11 +297,70 @@ Ikus dezakegunez, MCMC bidez lortutako hurbilketa (gorriz) soluzio analitikoaren
 
 \bigskip
 
+*Analitikoki*
+
+```{r}
+TB.analitiko <- qbeta(c(0.025, 0.975), alfa.aposteriori, beta.aposteriori)
+names(TB.analitiko) <- paste("%", c(2.5, 97.5), sep = "")
+TB.analitiko
+```
+
+*MCMC*
+
+```{r}
+TB.mcmc <- quantile(aposteriori.lagina[5000:50000], c(0.025, 0.975))
+names(TB.mcmc) <- paste("%", c(2.5, 97.5), sep = "")
+TB.mcmc
+```
 
 
 # Ariketak
 
 **1. ariketa:** \ Egin berriro aurreko adibidea, baina hurrengo balioaren proposamena egiteko honako banaketa uninforme hau erabiliz: $g(x^*|x_{i-1})=Unif(x_{i-1}-w, x_{i-1}+w)$, non $w \in \mathbb{R}$. Probatu $w$ parametroaren balio ezberdinetarako (adibidez $w\in \{0.0001, 0.1, 1, 100, 1000\}$) eta irudikatu kateak egiten duen ibilbidearen lehen 5000 balioak. 
+
+Lehenengo MCMC-rako funtzio orokor bat sortuko dut:
+
+```{r}
+mcmc <- function(lagin.kopurua, # Zenbat lagin sortu
+                 df, # Lagindu nahi den dentsitate funtzioaren proportzionala
+                 dg, # g-ren dentsitate funtzioa
+                 rg, # g lagintzeko funtzioa
+                 x1 # lehenengo balioa
+                 ){
+  lagina <- x1
+  
+  for (i in 1:lagin.kopurua) {
+    balio.posible <- rg(lagina[i])
+    
+    ratio <- f(balio.posible)*dg(lagina[i], balio.posible)/
+            (f(lagina[i])*dg(balio.posible, lagina[i]))
+    
+    if (ratio > runif(1)){
+      balioa.gehitzeko <- balio.posible
+    } else {
+      balioa.gehitzeko <- lagina[i]
+    }
+    
+    lagina <- c(lagina, balioa.gehitzeko)
+  }
+  
+  return (lagina)
+}
+```
+
+Orain definituko ditut \texttt{df, dg} eta \texttt{rg}
+
+```{r}
+df <- function(x) {
+  (x^binomial.true * (1-x) ^ binomial.false) *
+    dbeta(x, alfa.apriori, beta.apriori)
+}
+
+dg <- function(x) {
+  #TODO
+}
+```
+
 
 + Zer gertatzen da $w$-ren balio oso handietarako? Eta oso txikietarako? Zergatik lortzen dituzu emaitza horiek? 
 
