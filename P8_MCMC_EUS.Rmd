@@ -332,8 +332,13 @@ mcmc <- function(lagin.kopurua, # Zenbat lagin sortu
   for (i in 1:lagin.kopurua) {
     balio.posible <- rg(lagina[i])
     
-    ratio <- f(balio.posible)*dg(lagina[i], balio.posible)/
-            (f(lagina[i])*dg(balio.posible, lagina[i]))
+    ratio.zati <- df(lagina[i])*dg(balio.posible, lagina[i])
+    if (ratio.zati != 0){
+      ratio <- df(balio.posible)*dg(lagina[i], balio.posible)/ratio.zati
+    } else {
+      ratio <- 1
+    }
+      
     
     if (ratio > runif(1)){
       balioa.gehitzeko <- balio.posible
@@ -351,18 +356,36 @@ mcmc <- function(lagin.kopurua, # Zenbat lagin sortu
 Orain definituko ditut \texttt{df, dg} eta \texttt{rg}
 
 ```{r}
+
 df <- function(x) {
   (x^binomial.true * (1-x) ^ binomial.false) *
     dbeta(x, alfa.apriori, beta.apriori)
 }
 
-dg <- function(x) {
-  #TODO
+for (w in c(0.0001, 0.1, 1, 100, 1000)){
+  w <- 0.01
+  
+  dg <- function(x0, xp) {
+    1/(2*w)
+  }
+  
+  rg <- function(x){
+    runif(1, x-w, x+w)
+  }
+  
+  lagina <- mcmc(50000, df, dg, rg, rbeta(1, alfa.apriori, beta.apriori))
+  
+  # Irudikatu
+  hist(lagina[45001:50000], main=paste("Lagindutako balioen histograma azken 1000 pausoetan w =", w))
+  plot(49001:50000, lagina[49001:50000], type="l", col="darkgreen", 
+       xlab="Pausoa", ylab="Theta", main=paste("Lagindutako balioak azken 1000 pausoetan w =", w))
 }
 ```
 
 
 + Zer gertatzen da $w$-ren balio oso handietarako? Eta oso txikietarako? Zergatik lortzen dituzu emaitza horiek? 
+
+*Erantzuna:* \texttt{w} handiegia bada 0 dentsitatea duen puntu askotan eroriko da algoritmoa, ondorioz kate luzeak egongo dira non balioak ez diren aldatzen. \texttt{w} txikiegia bada, ordea, nahiz eta aldaketa gehiago gertatu, aldaketa horiek oso txikiak izango dira.
 
 + Irudikatu baita ere, katearen azken 5000 balioen (banaketa egonkorra) histograma edota dentsitatea eta aztertu ea a posteriori banaketaren hurbilketa onak lortu dituzun kasu bakoitzean. Nolakoak dira hurbilketa hoiek $w$-ren balio desberdinetarako?
 
